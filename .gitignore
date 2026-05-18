@@ -1,0 +1,14 @@
+# Local-only files — never commit
+.env
+.env.*
+*.local
+secrets/
+**/vault.yml
+**/*.vaulted
+*.pem
+*.key
+id_*
+known_hosts
+.claude/
+.vscode/
+.idea/

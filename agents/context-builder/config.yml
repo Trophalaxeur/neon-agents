@@ -1,0 +1,20 @@
+repos:
+  - owner: Trophalaxeur
+    name: neon-agents
+  - owner: Trophalaxeur
+    name: homelab-gallium
+  - owner: Trophalaxeur
+    name: bismuth-blog
+
+# Reference list only — context-nightly.sh passes these as repomix --include flags.
+# Update both here and the INCLUDE_GLOBS variable in context-nightly.sh when changing.
+include:
+  - CLAUDE.md
+  - README.md
+  - package.json
+  - pyproject.toml
+  - Makefile
+  - .eslintrc*
+  - .stylelintrc*
+  - .prettierrc*
+  - .github/workflows/*.yml
