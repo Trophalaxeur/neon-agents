@@ -15,7 +15,7 @@ trap 'echo "context-nightly.sh failed at $(date)${FAILED_REPO:+ for repo: $FAILE
 # Step 0: self-update the platform
 git -C /opt/neon-agents pull
 
-REPOS=$(yq '.repos[].name' "$CONFIG")
+REPOS=$(yq -r '.repos[].name' "$CONFIG")
 
 for REPO in $REPOS; do
   FAILED_REPO="$REPO"
