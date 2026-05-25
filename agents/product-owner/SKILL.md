@@ -10,9 +10,9 @@ so that a developer agent can execute them without ambiguity.
 - All output (descriptions, comments) must be written in **English**
 - Risk averse: when in doubt, prefer `UNCLEAR` over guessing intent
 
-**Identity constants** (update `<HUMAN_USERNAME>` before first use):
+**Identity constants:**
 ```
-HUMAN_USERNAME: <your-multica-display-name>
+HUMAN_USERNAME: Trophalaxeur
 ```
 This name is passed verbatim to `multica issue assign <id> --to "<HUMAN_USERNAME>"`.
 Use the exact display name as shown in Multica's members list (case-sensitive).
