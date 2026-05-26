@@ -117,65 +117,51 @@ Complexity scale:
 - **Medium**: a few related components, one repo
 - **Complex**: multiple pages/services, cross-repo, significant effort
 
-**Step 6 — Execute**
+**Steps 6+7 — Execute and notify (atomic)**
+
+All operations for each decision path are grouped into a **single Bash call**.
+This ensures the notification is sent even if the task is interrupted shortly after.
+
+Compose the full command before running it — substitute all placeholders first.
 
 ```bash
-# REFINE
-multica issue update <id> --description "<refined markdown>"
-multica issue status <id> todo
-multica issue assign <id> --to "<HUMAN_USERNAME>"
-multica issue comment <id> "Refined. <one-line functional summary>. Complexity: <Simple|Medium|Complex>."
+# ── REFINE ──────────────────────────────────────────────────────────────────
+SUMMARY="<one-line functional summary>"
+COMPLEXITY="<Simple|Medium|Complex>"
+multica issue update <id> --description "<refined markdown>" && \
+multica issue status <id> todo && \
+multica issue assign <id> --to "<HUMAN_USERNAME>" && \
+multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}." && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
 
-# TOO_COMPLEX or UNCLEAR
-multica issue comment <id> "<comment body>"
-multica issue status <id> blocked
+# ── UNCLEAR or TOO_COMPLEX ───────────────────────────────────────────────────
+DECISION="<UNCLEAR|TOO_COMPLEX>"
+REASON="<explanation and missing info>"
+multica issue comment add <id> --content "**Decision: ${DECISION}**\n\n${REASON}\n\nThis ticket will remain blocked until the issue is resolved." && \
+multica issue status <id> blocked && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — ${DECISION} (blocked)\n\n<TITLE>\n${REASON}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
 
-# SPLIT — propose, wait for human validation
-multica issue comment <id> "<split proposal>"
-multica issue status <id> blocked
+# ── SPLIT — propose ──────────────────────────────────────────────────────────
+PROPOSAL="<split proposal body>"
+multica issue comment add <id> --content "${PROPOSAL}" && \
+multica issue status <id> blocked && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split proposed (blocked)\n\n<TITLE>\n${PROPOSAL}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
 
-# SPLIT resolution (human @mentions with creation instructions)
+# ── SPLIT resolution ─────────────────────────────────────────────────────────
 multica issue create --project <inferred-project> --title "<sub-ticket title>" \
   --description "<AC from split plan>"
-# For transverse splits: infer the most relevant project per sub-ticket
-# If no project can be inferred: omit --project (workspace level)
-multica issue comment <id> \
-  "Sub-tickets created: <IDs>. They are drafts — @JeanMiPO on each to refine fully."
-multica issue status <id> cancelled
+# repeat for each sub-ticket; collect IDs
+SUB_IDS="<id1>, <id2>"
+multica issue comment add <id> --content "Sub-tickets created: ${SUB_IDS}. They are drafts — @JeanMiPO on each to refine fully." && \
+multica issue status <id> cancelled && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split created\n\n<TITLE>\nSub-tickets: ${SUB_IDS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
 ```
 
 Confirmed CLI syntax:
 - `issue status <id> <status>` — positional, NOT `--set`
 - `issue assign <id> --to <name>` or `--to-id <uuid>`
+- `issue comment add <id> --content "<text>"`
 - `issue create --title <t> [--description <d>] [--project <p>] [--assignee <name>] [--parent <id>] [--priority <p>] [--due-date <d>]`
-
-**Step 7 — Notify**
-
-After every decision, send an email to `admin@flefevre.fr` via msmtp.
-
-Construct the ticket URL as:
-```
-https://multica.ai/<workspace_id>/issues/<identifier>
-# e.g. https://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/MEN-1
-```
-
-Send the email:
-```bash
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — <DECISION>\n\n<body>\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" \
-  | msmtp admin@flefevre.fr
-```
-
-Subject and body per decision:
-
-| Decision     | Subject                                      | Body                                                              |
-|---|---|---|
-| `REFINE`     | `[Multica] <KEY> — Refined`                  | Title + one-line summary + `Complexity: <level>` + link           |
-| `UNCLEAR`    | `[Multica] <KEY> — UNCLEAR (blocked)`        | Title + list of missing/ambiguous elements + link                 |
-| `TOO_COMPLEX`| `[Multica] <KEY> — TOO_COMPLEX (blocked)`    | Title + reason + link                                             |
-| `SPLIT`      | `[Multica] <KEY> — Split proposed (blocked)` | Title + proposed sub-ticket titles + link                         |
-| `SPLIT` done | `[Multica] <KEY> — Split created`            | Title + list of created sub-ticket IDs and titles + link          |
-
-Always send the notification — even if a previous step partially failed (best effort).
 
 ## REFINE — description template
 
