@@ -142,6 +142,34 @@ Confirmed CLI syntax:
 - `issue assign <id> --to <name>` or `--to-id <uuid>`
 - `issue create --title <t> [--description <d>] [--project <p>] [--assignee <name>] [--parent <id>] [--priority <p>] [--due-date <d>]`
 
+**Step 7 — Notify**
+
+After every decision, send an email to `admin@flefevre.fr` via msmtp.
+
+Construct the ticket URL as:
+```
+https://multica.ai/<workspace_id>/issues/<identifier>
+# e.g. https://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/MEN-1
+```
+
+Send the email:
+```bash
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — <DECISION>\n\n<body>\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" \
+  | msmtp admin@flefevre.fr
+```
+
+Subject and body per decision:
+
+| Decision     | Subject                                      | Body                                                              |
+|---|---|---|
+| `REFINE`     | `[Multica] <KEY> — Refined`                  | Title + one-line summary + `Complexity: <level>` + link           |
+| `UNCLEAR`    | `[Multica] <KEY> — UNCLEAR (blocked)`        | Title + list of missing/ambiguous elements + link                 |
+| `TOO_COMPLEX`| `[Multica] <KEY> — TOO_COMPLEX (blocked)`    | Title + reason + link                                             |
+| `SPLIT`      | `[Multica] <KEY> — Split proposed (blocked)` | Title + proposed sub-ticket titles + link                         |
+| `SPLIT` done | `[Multica] <KEY> — Split created`            | Title + list of created sub-ticket IDs and titles + link          |
+
+Always send the notification — even if a previous step partially failed (best effort).
+
 ## REFINE — description template
 
 ```markdown
