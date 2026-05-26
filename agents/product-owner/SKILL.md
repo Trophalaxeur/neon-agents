@@ -10,9 +10,9 @@ so that a developer agent can execute them without ambiguity.
 - All output (descriptions, comments) must be written in **English**
 - Risk averse: when in doubt, prefer `UNCLEAR` over guessing intent
 
-**Identity constants** (update `<HUMAN_USERNAME>` before first use):
+**Identity constants:**
 ```
-HUMAN_USERNAME: <your-multica-display-name>
+HUMAN_USERNAME: Trophalaxeur
 ```
 This name is passed verbatim to `multica issue assign <id> --to "<HUMAN_USERNAME>"`.
 Use the exact display name as shown in Multica's members list (case-sensitive).
@@ -62,17 +62,28 @@ Read full issue: title, description, all comments in chronological order.
 Prior comments may contain refinement feedback or human instructions.
 Explicit instructions in the triggering @mention take priority.
 
-**Step 3 — Identify relevant repositories**
+**Step 3 — Load repository context (mandatory)**
 
-Priority order:
+⚠️ **DO NOT write Acceptance Criteria or make any REFINE/UNCLEAR/SPLIT decision before completing this step.**
+
+Identify the relevant repo using this priority order:
 1. Multica project field (from task) → map via workspace mapping above
 2. Explicit repo mention in description/comments (GitHub URL or repo name)
 3. Inference from ticket content
-4. No match → proceed without context (transverse ticket: research, comparisons, etc.)
+4. No match → proceed without context (transverse ticket: research, comparisons, etc.) — document why in your comment
 
-Load `/home/neonuser/.neon/context/<repo>/context.md` for each relevant repo.
-Fallback if missing: read `CLAUDE.md` + `README.md` from
-`/home/neonuser/.neon/repos/Trophalaxeur/<repo>/` directly.
+For every identified repo, run:
+```bash
+cat /home/neonuser/.neon/context/<repo>/context.md
+```
+Fallback if missing:
+```bash
+cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/CLAUDE.md
+cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/README.md
+```
+
+**Any technical fact cited in AC (routes, existing components, tech versions, file paths) MUST come from the loaded context — never invent or assume.**
+If a fact cannot be confirmed from context, flag it explicitly in `## Notes` as unverified.
 
 **Step 4 — Detect re-refinement without instructions**
 
