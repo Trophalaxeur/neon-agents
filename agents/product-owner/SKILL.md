@@ -117,6 +117,26 @@ Complexity scale:
 - **Medium**: a few related components, one repo
 - **Complex**: multiple pages/services, cross-repo, significant effort
 
+**Step 5b — Assess executability (REFINE path only)**
+
+For each AC item, classify its executor using these rules:
+
+| Label              | Applies when the AC requires…                                                                 |
+|--------------------|-----------------------------------------------------------------------------------------------|
+| `JeanMichelable`   | Changes committed to a repo (code, config, content, translations, assets, Ansible/Terraform)  |
+| `Human`            | Physical machine access, personal credentials not stored in a repo, manual UI interaction, hardware operation |
+
+A ticket can carry **both labels** when some AC items are automatable and others are not.
+Tag each AC item individually — never tag the whole ticket as one block.
+
+**Candidate agent name format**: `JeanMichel<Role>` — infer the role from the AC domain:
+- Code/config changes → `JeanMichelDev`
+- UI/visual design → `JeanMichelDesigner`
+- Text/translation → `JeanMichelTranslator`
+- Sysadmin/infra-as-code → `JeanMichelDev` (until a dedicated infra agent exists)
+
+If a JeanMichel* agent is assigned to this ticket later, its scope is **strictly limited to the AC items tagged 🤖 with its name** — Human-tagged items are out of scope.
+
 **Steps 6+7 — Execute and notify (atomic)**
 
 All operations for each decision path are grouped into a **single Bash call**.
@@ -128,11 +148,12 @@ Compose the full command before running it — substitute all placeholders first
 # ── REFINE ──────────────────────────────────────────────────────────────────
 SUMMARY="<one-line functional summary>"
 COMPLEXITY="<Simple|Medium|Complex>"
+EXEC_LABELS="<JeanMichelable|Human|JeanMichelable+Human>"
 multica issue update <id> --description "<refined markdown>" && \
 multica issue status <id> todo && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
-multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}." && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}. Executability: ${EXEC_LABELS}." && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}]\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
 
 # ── UNCLEAR or TOO_COMPLEX ───────────────────────────────────────────────────
 DECISION="<UNCLEAR|TOO_COMPLEX>"
@@ -170,7 +191,13 @@ Confirmed CLI syntax:
 [Functional description of the feature/fix and its value]
 
 ## Acceptance Criteria
-- [ ] ...
+- [ ] 🤖 [JeanMichelDev] ...   ← automatable: resolved by committing to a repo
+- [ ] 👤 [Human] ...           ← requires physical access, personal credentials, or manual UI
+
+## Executability
+**Labels**: `JeanMichelable` | `Human` | `JeanMichelable` `Human`
+**Agents**: [AgentName] — [scope, one sentence per agent]
+**Human scope**: [what requires human intervention and why]
 
 ## Expected Result
 [What the user/system should do/show when done]
@@ -181,6 +208,11 @@ Confirmed CLI syntax:
 ## Notes
 [Optional — only if a relevant edge case or suspicious dependency was spotted]
 ```
+
+AC tagging rules:
+- Every AC item must have exactly one prefix: `🤖 [AgentName]` or `👤 [Human]`
+- If an AC item mixes both (e.g. "write config AND deploy"), split it into two items first
+- `## Executability` → `Labels` lists only the labels actually used in the AC items above
 
 ## SPLIT — comment format
 
