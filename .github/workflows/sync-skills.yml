@@ -1,0 +1,49 @@
+name: Sync Multica Skills
+
+on:
+  push:
+    branches: [main]
+    paths: ['agents/**/SKILL.md']
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Install multica CLI
+        run: curl -fsSL https://multica.ai/install.sh | sh
+
+      - name: Authenticate
+        run: multica login --token ${{ secrets.MULTICA_PAT }}
+
+      - name: Sync changed skills
+        run: |
+          changed=$(git diff --name-only HEAD~1 HEAD -- 'agents/**/SKILL.md')
+
+          if [ -z "$changed" ]; then
+            echo "No SKILL.md changes in this push."
+            exit 0
+          fi
+
+          failed=0
+          for skill_md in $changed; do
+            dir=$(dirname "$skill_md")
+            skill_id_file="$dir/.skill-id"
+
+            if [ ! -f "$skill_id_file" ]; then
+              echo "::warning::No .skill-id found for $skill_md — skipping"
+              continue
+            fi
+
+            skill_id=$(tr -d '[:space:]' < "$skill_id_file")
+            echo "Updating skill $skill_id ($skill_md)..."
+            if ! multica skill update "$skill_id"; then
+              echo "::error::Failed to update skill $skill_id"
+              failed=1
+            fi
+          done
+
+          exit $failed

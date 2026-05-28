@@ -69,6 +69,9 @@ Read full issue: title, description, all comments in chronological order.
 Prior comments may contain refinement feedback or human instructions.
 Explicit instructions in the triggering @mention take priority.
 
+**Save the original description verbatim** — it will be prepended to the refined output in Step 6.
+If the description already contains an `> **Original request**` block (re-refinement), extract only the original block content, not the previously refined section.
+
 **Step 3 — Load repository context (mandatory)**
 
 ⚠️ **DO NOT write Acceptance Criteria or make any REFINE/UNCLEAR/SPLIT decision before completing this step.**
@@ -210,6 +213,12 @@ Confirmed CLI syntax:
 ## REFINE — description template
 
 ```markdown
+> **Original request**
+>
+> {original description verbatim — preserve line breaks with "> " prefix on each line}
+
+---
+
 ## Summary
 [Functional description of the feature/fix and its value]
 
