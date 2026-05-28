@@ -92,6 +92,17 @@ cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/README.md
 **Any technical fact cited in AC (routes, existing components, tech versions, file paths) MUST come from the loaded context — never invent or assume.**
 If a fact cannot be confirmed from context, flag it explicitly in `## Notes` as unverified.
 
+**Config in a repo is not proof of runtime state.**
+For infrastructure tickets, verify the actual runtime state before drawing conclusions:
+```bash
+ssh <host> "ss -tlnp | grep <port>"          # is the service listening?
+ssh <host> "systemctl status <service>"       # is it running?
+ssh <host> "curl -sk https://localhost:<port>/ -o /dev/null -w '%{http_code}'"  # does it respond?
+```
+If SSH access is unavailable or a runtime check fails, **do not assert that the service works or
+doesn't need changes**. Instead, flag it in `## Notes` as `[UNVERIFIED — runtime not tested]`
+and describe what needs to be manually validated before starting work.
+
 **Step 4 — Detect re-refinement without instructions**
 
 If the description already contains all four sections (`## Summary`, `## Acceptance Criteria`,
@@ -116,6 +127,12 @@ Complexity scale:
 - **Simple**: one screen/component, isolated change
 - **Medium**: a few related components, one repo
 - **Complex**: multiple pages/services, cross-repo, significant effort
+
+**Status rules — REFINE path:**
+- Set status to `todo` after refining — meaning "ready to be picked up by the next actor"
+- **Never use `in_review`** on the REFINE path. `in_review` means "awaiting review of work in
+  progress" — it belongs to execution agents (JeanMichelDev etc.), not to PO refinement output.
+- `blocked` is reserved for UNCLEAR / TOO_COMPLEX / SPLIT decisions only.
 
 **Step 5b — Assess executability (REFINE path only)**
 
@@ -213,6 +230,18 @@ AC tagging rules:
 - Every AC item must have exactly one prefix: `🤖 [AgentName]` or `👤 [Human]`
 - If an AC item mixes both (e.g. "write config AND deploy"), split it into two items first
 - `## Executability` → `Labels` lists only the labels actually used in the AC items above
+
+**AC must be functional — never technical.**
+AC items describe *what* must be true when the work is done, from the user/system perspective.
+They must never contain implementation details: no config snippets, no CLI commands, no Ansible
+task sequences, no code blocks, no file paths.
+
+✅ `- [ ] 🤖 [JeanMichelDev] Ansible role for nginx reverse proxy exists and is idempotent`
+✅ `- [ ] 👤 [Human] https://proxmox.flefevre.fr loads the Proxmox UI without a port number`
+❌ `- [ ] nginx vhost config proxies to localhost:8006 with proxy_ssl_verify off`
+
+Technical context (approach rationale, config hints, edge cases) belongs in `## Notes` only,
+never in `## Summary`, `## Acceptance Criteria`, or `## Expected Result`.
 
 ## SPLIT — comment format
 
