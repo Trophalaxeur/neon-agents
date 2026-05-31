@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Install multica CLI
         run: curl -fsSL https://multica.ai/install.sh | sh
@@ -20,8 +20,11 @@ jobs:
         run: multica login --token ${{ secrets.MULTICA_PAT }}
 
       - name: Sync changed skills
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
         run: |
-          changed=$(git diff --name-only HEAD~1 HEAD -- 'agents/**/SKILL.md')
+          changed=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" -- 'agents/**/SKILL.md')
 
           if [ -z "$changed" ]; then
             echo "No SKILL.md changes in this push."
@@ -34,7 +37,7 @@ jobs:
           for skill_md in $changed; do
             skill_name=$(grep -m1 '<!-- multica-skill:' "$skill_md" \
               | sed 's/.*multica-skill: *\(.*\) *-->/\1/' \
-              | tr -d '[:space:]')
+              | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
             if [ -z "$skill_name" ]; then
               echo "::warning::$skill_md has no '<!-- multica-skill: ... -->' header — skipping"
