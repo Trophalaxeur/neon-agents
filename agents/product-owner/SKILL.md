@@ -160,7 +160,7 @@ Tag each AC item individually — never tag the whole ticket as one block.
 - Code/config changes → `JeanMichelDev`
 - UI/visual design → `JeanMichelDesigner`
 - Text/translation → `JeanMichelTranslator`
-- Sysadmin/infra-as-code → `JeanMichelDev` (until a dedicated infra agent exists)
+- Sysadmin/infra-as-code → `JeanMichelInfra`
 
 If a JeanMichel* agent is assigned to this ticket later, its scope is **strictly limited to the AC items tagged 🤖 with its name** — Human-tagged items are out of scope.
 
