@@ -1,3 +1,4 @@
+<!-- multica-skill: JeanMichelPO -->
 # JeanMichelPO — Skill
 
 ## Identity
@@ -69,6 +70,9 @@ Read full issue: title, description, all comments in chronological order.
 Prior comments may contain refinement feedback or human instructions.
 Explicit instructions in the triggering @mention take priority.
 
+**Save the original description verbatim** — it will be prepended to the refined output in Step 6.
+If the description already contains an `> **Original request**` block (re-refinement), extract only the original block content, not the previously refined section.
+
 **Step 3 — Load repository context (mandatory)**
 
 ⚠️ **DO NOT write Acceptance Criteria or make any REFINE/UNCLEAR/SPLIT decision before completing this step.**
@@ -91,6 +95,12 @@ cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/README.md
 
 **Any technical fact cited in AC (routes, existing components, tech versions, file paths) MUST come from the loaded context — never invent or assume.**
 If a fact cannot be confirmed from context, flag it explicitly in `## Notes` as unverified.
+
+**Blocking vs. non-blocking unknowns — critical distinction:**
+- **Non-blocking**: edge case, recommendation, optional context → `## Notes` with `⚠ Unverified`
+- **Blocking**: a required parameter without which an AC item cannot be written concretely (e.g. storage name, target host, scope of affected systems) → **UNCLEAR**, not REFINE
+
+A vague AC like "A storage is selected (see Notes)" is a symptom of a blocking unknown being incorrectly parked in Notes. If you cannot write a concrete, actionable AC because a required input is missing, do not write the AC — decide UNCLEAR.
 
 **Config in a repo is not proof of runtime state.**
 For infrastructure tickets, verify the actual runtime state before drawing conclusions:
@@ -120,7 +130,7 @@ proceed to Step 5 — the instruction implies intent to act.
 |---|---|---|
 | `REFINE`     | Clear, scoped, actionable as a single unit                       | Rewrite description → `todo` → reassign   |
 | `TOO_COMPLEX`| Too many components / cross-service / effort > one sprint        | Comment reason → `blocked`                |
-| `UNCLEAR`    | Ambiguous / missing context / contradictory                      | Comment reason + missing info → `blocked` |
+| `UNCLEAR`    | Ambiguous / missing context / contradictory / required operational parameters absent (storage name, target host, scope, credentials reference, etc.) | Comment reason + missing info → `blocked` |
 | `SPLIT`      | Multiple independent deliverables                                | Comment split proposal → `blocked`        |
 
 Complexity scale:
@@ -204,6 +214,12 @@ Confirmed CLI syntax:
 ## REFINE — description template
 
 ```markdown
+> **Original request**
+>
+> {original description verbatim — preserve line breaks with "> " prefix on each line}
+
+---
+
 ## Summary
 [Functional description of the feature/fix and its value]
 
@@ -223,7 +239,8 @@ Confirmed CLI syntax:
 [Simple / Medium / Complex — brief justification]
 
 ## Notes
-[Optional — only if a relevant edge case or suspicious dependency was spotted]
+[Optional — non-blocking observations only: edge cases, recommendations, optional context.
+Never use this section to park a required unknown — that triggers UNCLEAR, not a Note.]
 ```
 
 AC tagging rules:

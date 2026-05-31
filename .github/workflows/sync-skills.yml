@@ -1,0 +1,73 @@
+name: Sync Multica Skills
+
+on:
+  push:
+    branches: [main]
+    paths: ['agents/**/SKILL.md']
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install multica CLI
+        run: curl -fsSL https://multica.ai/install.sh | sh
+
+      - name: Authenticate
+        run: multica login --token ${{ secrets.MULTICA_PAT }}
+
+      - name: Sync changed skills
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            changed=$(git ls-files -- 'agents/**/SKILL.md')
+          else
+            changed=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" -- 'agents/**/SKILL.md')
+          fi
+
+          if [ -z "$changed" ]; then
+            echo "No SKILL.md changes in this push."
+            exit 0
+          fi
+
+          skill_list=$(multica skill list --output json)
+          failed=0
+
+          for skill_md in $changed; do
+            if [ ! -f "$skill_md" ]; then
+              echo "::warning::$skill_md was deleted — skipping"
+              continue
+            fi
+
+            skill_name=$(grep -m1 '<!-- multica-skill:' "$skill_md" \
+              | sed 's/.*multica-skill: *\(.*\) *-->/\1/' \
+              | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+              || true)
+
+            if [ -z "$skill_name" ]; then
+              echo "::warning::$skill_md has no '<!-- multica-skill: ... -->' header — skipping"
+              continue
+            fi
+
+            skill_id=$(echo "$skill_list" \
+              | jq -r --arg name "$skill_name" '.[] | select(.name == $name) | .id')
+
+            if [ -z "$skill_id" ]; then
+              echo "::error::Skill '$skill_name' not found in Multica — create it first"
+              failed=1
+              continue
+            fi
+
+            echo "Updating '$skill_name' ($skill_id)..."
+            if ! multica skill update "$skill_id"; then
+              echo "::error::multica skill update failed for $skill_name"
+              failed=1
+            fi
+          done
+
+          exit $failed
