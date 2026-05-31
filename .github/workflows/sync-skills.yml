@@ -15,7 +15,7 @@ jobs:
 
       - name: Install multica CLI
         run: |
-          curl -fsSL https://multica.ai/install.sh | sh
+          curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash
           MULTICA=$(find "$HOME" /usr/local/bin /usr/bin -maxdepth 4 -name multica -type f 2>/dev/null | head -1)
           if [ -z "$MULTICA" ]; then
             echo "::error::multica binary not found after install"
