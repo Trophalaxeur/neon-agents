@@ -39,9 +39,15 @@ jobs:
           failed=0
 
           for skill_md in $changed; do
+            if [ ! -f "$skill_md" ]; then
+              echo "::warning::$skill_md was deleted — skipping"
+              continue
+            fi
+
             skill_name=$(grep -m1 '<!-- multica-skill:' "$skill_md" \
               | sed 's/.*multica-skill: *\(.*\) *-->/\1/' \
-              | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+              || true)
 
             if [ -z "$skill_name" ]; then
               echo "::warning::$skill_md has no '<!-- multica-skill: ... -->' header — skipping"
