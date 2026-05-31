@@ -1,0 +1,121 @@
+direction: down
+
+# =============================================================================
+# neon-agents — Complete Workflow
+#
+# Two parallel ongoing flows:
+#   A. Nightly context refresh — runs unattended at 01:00
+#   B. Ticket → Agent execution → Output — triggered on demand
+#
+# Inter-agent handoff: agent posts a comment with @NextAgent,
+# Multica detects it and enqueues a new task → the cycle restarts.
+# =============================================================================
+
+# ─── Operator (Thallium) ─────────────────────────────────────────────────────
+
+operator: "👤 Operator · Thallium" {
+  style.fill: "#f5f5f5"
+  style.stroke: "#9e9e9e"
+
+  push_skill: "Edit SKILL.md\ngit push"
+  create: "Create ticket\nmultica issue create"
+  mention: "Post @mention\nin ticket comment"
+  merge: "Merge PR\n(Human decision)"
+}
+
+# ─── GitHub ──────────────────────────────────────────────────────────────────
+
+github: GitHub {
+  style.fill: "#f6f8fa"
+  style.stroke: "#24292e"
+
+  neon_agents: "neon-agents\nskills · config · scheduler"
+  homelab: "homelab-gallium\n(Terraform · Ansible)"
+  blog: "bismuth-blog\n(personal blog)"
+}
+
+# ─── Multica cloud ───────────────────────────────────────────────────────────
+
+multica: "Multica cloud · multica.ai" {
+  style.fill: "#dbeafe"
+  style.stroke: "#1d4ed8"
+
+  kanban: "Kanban board\ntickets · statuses · assignees · comments"
+  skills_reg: "Skill registry"
+  task_q: "Task queue\nQueued → Dispatched → Running → Completed"
+}
+
+# ─── LXC neon ────────────────────────────────────────────────────────────────
+
+neon: "LXC neon · <neon-ip> · user neonuser" {
+  style.fill: "#fef9c3"
+  style.stroke: "#ca8a04"
+
+  cron: "Nightly cron (01:00)\ncontext-nightly.sh" {
+    style.fill: "#fef3c7"
+    style.stroke: "#d97706"
+  }
+
+  repos: "Repo clones\n.neon/repos/Trophalaxeur/"
+
+  cache: "Context cache\n.neon/context/<repo>/context.md" {
+    shape: cylinder
+    style.fill: "#fefce8"
+    style.stroke: "#ca8a04"
+  }
+
+  daemon: "multica-daemon\nSystemd service · always-on"
+
+  session: "AI session (ephemeral · Claude Code CLI)" {
+    style.fill: "#fffbeb"
+    style.stroke: "#f59e0b"
+
+    s1: "1. Read SKILL.md\n(identity · process · rules · workspace mapping)"
+    s2: "2. Read context.md\n(repo structure · API · config · types)"
+    s3: "3. Execute process\n(decide · draft · validate output)"
+    s4: "4. Output via multica CLI\n(update description · set status\n· post comment · @mention next agent)"
+
+    s1 -> s2 -> s3 -> s4
+  }
+}
+
+# ─── Email ───────────────────────────────────────────────────────────────────
+
+email: "📧 <your-email>" {
+  shape: oval
+  style.fill: "#fce7f3"
+  style.stroke: "#be185d"
+}
+
+# ─── Flow A: Skill management ─────────────────────────────────────────────────
+
+operator.push_skill -> github.neon_agents: ""
+github.neon_agents -> multica.skills_reg: "Skill import\n(by raw URL)"
+
+# ─── Flow B: Nightly context refresh ─────────────────────────────────────────
+
+github.neon_agents -> neon.repos: "git pull (nightly)"
+github.homelab -> neon.repos: "git pull (nightly)"
+github.blog -> neon.repos: "git pull (nightly)"
+neon.cron -> neon.repos: "pull latest commits"
+neon.cron -> neon.cache: "repomix --compress\n→ context.md"
+
+# ─── Flow C: Ticket creation ──────────────────────────────────────────────────
+
+operator.create -> multica.kanban: ""
+operator.mention -> multica.task_q: "@mention → Task enqueued"
+
+# ─── Flow D: Task dispatch & execution ───────────────────────────────────────
+
+multica.task_q -> neon.daemon: "dispatch task"
+neon.daemon -> neon.session: "spawn\n(workdir · CLAUDE.md · MULTICA_TOKEN)"
+neon.session.s2 -> neon.cache: ""
+
+# ─── Flow E: Agent output ─────────────────────────────────────────────────────
+
+neon.session.s4 -> multica.kanban: "update ticket"
+neon.session.s4 -> email: "msmtp notification"
+
+# ─── Flow F: Inter-agent handoff ──────────────────────────────────────────────
+
+multica.kanban -> multica.task_q: "comment @AgentName\n→ new task enqueued\n(chain continues)"
