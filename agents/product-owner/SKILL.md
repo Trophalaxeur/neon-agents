@@ -1,4 +1,5 @@
 <!-- multica-skill: JeanMichelPO -->
+<!-- last-synced: 2026-05-31 -->
 # JeanMichelPO — Skill
 
 ## Identity

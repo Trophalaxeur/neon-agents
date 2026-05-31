@@ -16,7 +16,13 @@ jobs:
       - name: Install multica CLI
         run: |
           curl -fsSL https://multica.ai/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          MULTICA=$(find "$HOME" /usr/local/bin /usr/bin -maxdepth 4 -name multica -type f 2>/dev/null | head -1)
+          if [ -z "$MULTICA" ]; then
+            echo "::error::multica binary not found after install"
+            exit 1
+          fi
+          echo "Found multica at: $MULTICA"
+          echo "$(dirname "$MULTICA")" >> $GITHUB_PATH
 
       - name: Authenticate
         run: multica login --token ${{ secrets.MULTICA_PAT }}
