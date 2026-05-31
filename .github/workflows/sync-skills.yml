@@ -24,7 +24,11 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           AFTER_SHA: ${{ github.sha }}
         run: |
-          changed=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" -- 'agents/**/SKILL.md')
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            changed=$(git ls-files -- 'agents/**/SKILL.md')
+          else
+            changed=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" -- 'agents/**/SKILL.md')
+          fi
 
           if [ -z "$changed" ]; then
             echo "No SKILL.md changes in this push."
