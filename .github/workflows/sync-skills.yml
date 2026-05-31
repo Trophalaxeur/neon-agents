@@ -25,7 +25,9 @@ jobs:
           echo "$(dirname "$MULTICA")" >> $GITHUB_PATH
 
       - name: Authenticate
-        run: multica login --token ${{ secrets.MULTICA_PAT }}
+        run: |
+          multica config set server_url https://api.multica.ai
+          multica login --token ${{ secrets.MULTICA_PAT }}
 
       - name: Sync changed skills
         env:
