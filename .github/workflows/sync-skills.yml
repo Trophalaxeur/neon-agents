@@ -74,7 +74,9 @@ jobs:
             fi
 
             echo "Updating '$skill_name' ($skill_id)..."
-            if ! multica skill update "$skill_id"; then
+            if ! multica skill update "$skill_id" \
+                --name "$skill_name" \
+                --content "$(cat "$skill_md")"; then
               echo "::error::multica skill update failed for $skill_name"
               failed=1
             fi
