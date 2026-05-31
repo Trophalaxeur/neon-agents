@@ -1,0 +1,125 @@
+direction: right
+
+# =============================================================================
+# neon-agents — System Architecture
+#
+# Static topology: every component, where it lives, and how it connects.
+# Two main zones: Remote (cloud services) and Local (home network).
+#
+# homelab-gallium and bismuth-blog are referenced as managed repositories;
+# their internal structure is out of scope here.
+# =============================================================================
+
+# ─── Remote zone ─────────────────────────────────────────────────────────────
+
+remote: "☁  Remote" {
+  style.fill: "#f0f9ff"
+  style.stroke: "#0284c7"
+
+  github: GitHub {
+    style.fill: "#f6f8fa"
+    style.stroke: "#24292e"
+
+    neon_agents: "neon-agents (public)\nSkills · config · scheduler" {
+      shape: document
+      style.fill: "#ffffff"
+    }
+    homelab: "homelab-gallium (private)\nTerraform · Ansible" {
+      shape: document
+      style.fill: "#f0fdf4"
+    }
+    blog: "bismuth-blog (private)\nPersonal blog" {
+      shape: document
+      style.fill: "#fdf4ff"
+    }
+  }
+
+  multica: "Multica · multica.ai" {
+    style.fill: "#dbeafe"
+    style.stroke: "#1d4ed8"
+
+    kanban: "Kanban board\ntickets · statuses · assignees · comments"
+    skills_reg: "Skill registry\nSKILL.md content per agent"
+    orchestration: "Task orchestration\nQueued → Dispatched → Running → Completed"
+    history: "Execution history\nstdout · duration · status per run"
+  }
+}
+
+# ─── Local zone ──────────────────────────────────────────────────────────────
+
+local: "🏠  Local network" {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+
+  neon: "LXC neon · <neon-ip>\nProxmox gallium · user neonuser" {
+    style.fill: "#fef9c3"
+    style.stroke: "#ca8a04"
+
+    daemon: "multica-daemon\nSystemd service · always-on"
+    sessions: "AI sessions\nClaude Code CLI\nephemeral · one per task\nisolated workdir"
+    cron: "Context builder\ncron 01:00\ncontext-nightly.sh"
+    repos: "Repo clones\n.neon/repos/Trophalaxeur/" {
+      shape: cylinder
+      style.fill: "#fefce8"
+    }
+    cache: "Context cache\n.neon/context/<repo>/context.md\n(repomix output · one file per repo)" {
+      shape: cylinder
+      style.fill: "#fefce8"
+    }
+    logs: "Nightly logs\n.neon/logs/context-nightly-YYYYMMDD.log" {
+      shape: cylinder
+      style.fill: "#fefce8"
+    }
+  }
+
+  thallium: "Thallium · workstation\nArch Linux · <thallium-ip>" {
+    style.fill: "#fafafa"
+    style.stroke: "#9e9e9e"
+
+    git: "git\n(SSH remotes)"
+    cli: "multica CLI\n(OAuth · no local daemon)"
+    browser: "browser\n(Multica UI)"
+  }
+}
+
+# ─── External ─────────────────────────────────────────────────────────────────
+
+email: "📧 <your-email>" {
+  shape: oval
+  style.fill: "#fce7f3"
+  style.stroke: "#be185d"
+}
+
+# ─── Connections ──────────────────────────────────────────────────────────────
+
+# Thallium → GitHub
+local.thallium.git -> remote.github.neon_agents: "git push"
+
+# GitHub → Multica (skill import)
+remote.github.neon_agents -> remote.multica.skills_reg: "Skill import\n(by raw URL)"
+
+# GitHub → neon (nightly context pull)
+remote.github.neon_agents -> local.neon.repos: "nightly git pull"
+remote.github.homelab -> local.neon.repos: "nightly git pull"
+remote.github.blog -> local.neon.repos: "nightly git pull"
+
+# Context builder pipeline
+local.neon.cron -> local.neon.repos: "reads latest commits"
+local.neon.cron -> local.neon.cache: "repomix --compress"
+local.neon.cron -> local.neon.logs: "writes build log"
+
+# Operator → Multica (tickets & UI)
+local.thallium.cli -> remote.multica.kanban: "issue create · rerun"
+local.thallium.browser -> remote.multica.kanban: "Kanban · task history"
+
+# Multica → neon (task dispatch)
+remote.multica.orchestration -> local.neon.daemon: "task dispatch (HTTP)"
+
+# Daemon → sessions
+local.neon.daemon -> local.neon.sessions: "spawn\n(workdir · CLAUDE.md · env vars\nMULTICA_TOKEN · MULTICA_TASK_ID)"
+
+# Sessions I/O
+local.neon.sessions -> local.neon.cache: "cat context.md\n(read-only)"
+local.neon.sessions -> remote.multica.kanban: "update ticket\n(multica CLI)"
+local.neon.sessions -> remote.multica.history: "stdout streamed"
+local.neon.sessions -> email: "msmtp notification"
