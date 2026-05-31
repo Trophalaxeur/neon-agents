@@ -14,7 +14,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install multica CLI
-        run: curl -fsSL https://multica.ai/install.sh | sh
+        run: |
+          curl -fsSL https://multica.ai/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Authenticate
         run: multica login --token ${{ secrets.MULTICA_PAT }}
