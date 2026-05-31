@@ -71,8 +71,10 @@ Read full issue: title, description, all comments in chronological order.
 Prior comments may contain refinement feedback or human instructions.
 Explicit instructions in the triggering @mention take priority.
 
-**Save the original description verbatim** — it will be prepended to the refined output in Step 6.
-If the description already contains an `> **Original request**` block (re-refinement), extract only the original block content, not the previously refined section.
+**MANDATORY — Save the original description verbatim before doing anything else.**
+The original text MUST appear at the end of every refined description, after a `===========` separator line.
+Omitting this block is a hard error — always include it, no exceptions.
+If the description already contains a `===========` separator (re-refinement), extract only the content **after** the separator as the original to preserve; discard the previously refined section above it.
 
 **Step 3 — Load repository context (mandatory)**
 
@@ -117,7 +119,7 @@ and describe what needs to be manually validated before starting work.
 **Step 4 — Detect re-refinement without instructions**
 
 If the description already contains all four sections (`## Summary`, `## Acceptance Criteria`,
-`## Expected Result`, `## Complexity`) AND Step 0 found **no** `@JeanMichelPO` instruction
+`## Expected Result`, `## Complexity`) AND a `===========` separator AND Step 0 found **no** `@JeanMichelPO` instruction
 anywhere in the issue (description or any comment):
 → Comment: "This ticket appears already refined. What would you like me to improve?"
 → Leave status and assignee unchanged.
@@ -215,12 +217,6 @@ Confirmed CLI syntax:
 ## REFINE — description template
 
 ```markdown
-> **Original request**
->
-> {original description verbatim — preserve line breaks with "> " prefix on each line}
-
----
-
 ## Summary
 [Functional description of the feature/fix and its value]
 
@@ -242,7 +238,14 @@ Confirmed CLI syntax:
 ## Notes
 [Optional — non-blocking observations only: edge cases, recommendations, optional context.
 Never use this section to park a required unknown — that triggers UNCLEAR, not a Note.]
+
+===========
+
+{original description verbatim — copy it exactly as-is, no modifications}
 ```
+
+⚠️ The `===========` separator and original description block are **not optional**.
+Every REFINE output MUST end with them. If this block is absent, the output is incomplete.
 
 AC tagging rules:
 - Every AC item must have exactly one prefix: `🤖 [AgentName]` or `👤 [Human]`
