@@ -72,9 +72,12 @@ Prior comments may contain refinement feedback or human instructions.
 Explicit instructions in the triggering @mention take priority.
 
 **MANDATORY — Save the original description verbatim before doing anything else.**
-The original text MUST appear at the end of every refined description, after a `===========` separator line.
+The original text MUST appear at the **START** of every refined description, before the first `===========` separator line.
 Omitting this block is a hard error — always include it, no exceptions.
-If the description already contains a `===========` separator (re-refinement), extract only the content **after** the separator as the original to preserve; discard the previously refined section above it.
+Re-refinement detection:
+- **Current format** (`ORIGINAL === REFINED [=== TECHNICAL]`): extract the content **before the first** `===========` as the original to preserve.
+- **Legacy format** (`REFINED === ORIGINAL`): extract the content **after the last** `===========` as the original.
+Discard all sections after the original — they will be rewritten.
 
 **Step 3 — Load repository context (mandatory)**
 
@@ -146,6 +149,8 @@ Complexity scale:
 - **Never use `in_review`** on the REFINE path. `in_review` means "awaiting review of work in
   progress" — it belongs to execution agents (JeanMichelDev etc.), not to PO refinement output.
 - `blocked` is reserved for UNCLEAR / TOO_COMPLEX / SPLIT decisions only.
+- **When EXEC_LABELS includes `JeanMichelable`**: do NOT assign to `HUMAN_USERNAME` — trigger `@JeanMichelDev` instead (see Steps 6+7). JeanMichelDev will assign to the human after proposing technical solutions.
+- **When EXEC_LABELS is `Human` only**: assign directly to `HUMAN_USERNAME` as before.
 
 **Step 5b — Assess executability (REFINE path only)**
 
@@ -175,10 +180,20 @@ This ensures the notification is sent even if the task is interrupted shortly af
 Compose the full command before running it — substitute all placeholders first.
 
 ```bash
-# ── REFINE ──────────────────────────────────────────────────────────────────
+# ── REFINE — JeanMichelable (triggers JeanMichelDev for technical proposals) ─
 SUMMARY="<one-line functional summary>"
 COMPLEXITY="<Simple|Medium|Complex>"
-EXEC_LABELS="<JeanMichelable|Human|JeanMichelable+Human>"
+EXEC_LABELS="<JeanMichelable|JeanMichelable+Human>"
+multica issue update <id> --description "<refined markdown>" && \
+multica issue status <id> todo && \
+multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}. Executability: ${EXEC_LABELS}. @JeanMichelDev please propose technical solutions." && \
+multica issue rerun <id> && \
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}] — awaiting technical proposals\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+
+# ── REFINE — Human only (assigns directly to human) ─────────────────────────
+SUMMARY="<one-line functional summary>"
+COMPLEXITY="<Simple|Medium|Complex>"
+EXEC_LABELS="Human"
 multica issue update <id> --description "<refined markdown>" && \
 multica issue status <id> todo && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
@@ -217,6 +232,10 @@ Confirmed CLI syntax:
 ## REFINE — description template
 
 ```markdown
+{original description verbatim — copy it exactly as-is, no modifications}
+
+===========
+
 ## Summary
 [Functional description of the feature/fix and its value]
 
@@ -238,14 +257,10 @@ Confirmed CLI syntax:
 ## Notes
 [Optional — non-blocking observations only: edge cases, recommendations, optional context.
 Never use this section to park a required unknown — that triggers UNCLEAR, not a Note.]
-
-===========
-
-{original description verbatim — copy it exactly as-is, no modifications}
 ```
 
 ⚠️ The `===========` separator and original description block are **not optional**.
-Every REFINE output MUST end with them. If this block is absent, the output is incomplete.
+Every REFINE output MUST start with the original description block followed by the separator. If this block is absent or placed after the refined content, the output is incomplete.
 
 AC tagging rules:
 - Every AC item must have exactly one prefix: `🤖 [AgentName]` or `👤 [Human]`
