@@ -121,7 +121,8 @@ Identify the relevant repo using this priority order:
 3. Inference from ticket content
 4. No match → proceed without context (transverse ticket: research, comparisons, etc.) — document why in your comment
 
-For every identified repo, run:
+**Step 3a — Light context (always)**
+
 ```bash
 cat /home/neonuser/.neon/context/<repo>/context.md
 ```
@@ -131,8 +132,27 @@ cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/CLAUDE.md
 cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/README.md
 ```
 
-**Any technical fact cited in AC (routes, existing components, tech versions, file paths) MUST come from the loaded context — never invent or assume.**
-If a fact cannot be confirmed from context, flag it explicitly in `## Notes` as unverified.
+This gives you stack, conventions, and project purpose.
+
+**Step 3b — Live exploration (when the ticket touches existing code)**
+
+If the ticket references, modifies, or depends on existing routes, pages, components, or files — explore the repo directly **before** writing any AC:
+
+```bash
+# Discover what exists — costs ~50–200 tokens vs thousands for a pre-built context
+ls /home/neonuser/.neon/repos/Trophalaxeur/<repo>/src/pages/
+ls /home/neonuser/.neon/repos/Trophalaxeur/<repo>/src/components/
+find /home/neonuser/.neon/repos/Trophalaxeur/<repo> -name "<relevant-pattern>" | head -20
+cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/<specific-file>  # when needed
+```
+
+Trigger 3b when the ticket involves: adding a page/component alongside existing ones, modifying a UI element, referencing routes or configs that may already exist, or anything where "does X already exist?" is a relevant question.
+
+Skip 3b for: pure content changes, typo fixes, config value updates where the target file is named explicitly in the ticket.
+
+**If you explore and still cannot confirm a required fact: flag it in `## Notes` as `[UNVERIFIED — not found in repo]`, not as a blocking unknown — unless the AC literally cannot be written without it.**
+
+**Any technical fact cited in AC (routes, existing components, tech versions, file paths) MUST be confirmed by what you found in steps 3a or 3b — never invent or assume.**
 
 **Blocking vs. non-blocking unknowns — critical distinction:**
 - **Non-blocking**: edge case, recommendation, optional context → `## Notes` with `⚠ Unverified`
