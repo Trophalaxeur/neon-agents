@@ -141,14 +141,19 @@ This gives you stack, conventions, and project purpose.
 If the ticket references, modifies, or depends on existing routes, pages, components, or files — explore the repo directly **before** writing any AC:
 
 ```bash
-# Discover what exists — costs ~50–200 tokens vs thousands for a pre-built context
-ls /home/neonuser/.neon/repos/Trophalaxeur/<repo>/src/pages/
-ls /home/neonuser/.neon/repos/Trophalaxeur/<repo>/src/components/
-find /home/neonuser/.neon/repos/Trophalaxeur/<repo> -name "<relevant-pattern>" | head -20
-cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/<specific-file>  # when needed
+REPO=/home/neonuser/.neon/repos/Trophalaxeur/<repo>
+
+# Start from the root — understand the top-level structure first
+ls "$REPO"
+# Then drill into the relevant area (adapt to the repo's actual layout)
+ls "$REPO"/<relevant-directory>/
+find "$REPO" -name "<relevant-pattern>" | head -20
+cat "$REPO"/<specific-file>  # when needed
 ```
 
-Trigger 3b when the ticket involves: adding a page/component alongside existing ones, modifying a UI element, referencing routes or configs that may already exist, or anything where "does X already exist?" is a relevant question.
+The paths above are illustrative — always start with `ls "$REPO"` to discover the actual layout before assuming any structure. A web project may have `src/pages/`, an Ansible role may have `tasks/`, a Terraform repo may have `modules/` — adapt accordingly.
+
+Trigger 3b when the ticket involves: adding something alongside existing items, modifying or referencing an element that may already exist, or anything where "does X already exist?" is a relevant question.
 
 Skip 3b for: pure content changes, typo fixes, config value updates where the target file is named explicitly in the ticket.
 

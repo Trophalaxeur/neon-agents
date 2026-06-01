@@ -40,13 +40,19 @@ P = {
 }
 
 def parse_session(session_id):
-    matches = glob.glob(f"{projects_dir}/**/{session_id}.jsonl", recursive=True)
+    matches = glob.glob(f"{projects_dir}/**/{glob.escape(session_id)}.jsonl", recursive=True)
     if not matches:
         return None
     inp = cw = cr = out = 0
     with open(matches[0]) as f:
         for line in f:
-            obj = json.loads(line)
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
             if obj.get('type') == 'assistant':
                 u = obj.get('message', {}).get('usage', {})
                 inp += u.get('input_tokens', 0)
