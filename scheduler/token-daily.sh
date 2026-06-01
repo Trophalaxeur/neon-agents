@@ -6,7 +6,7 @@ set -euo pipefail
 
 ADMIN_EMAIL="${NEON_ADMIN_EMAIL:-admin@flefevre.fr}"
 PROJECTS_DIR="/home/neonuser/.claude/projects"
-REPORT_DATE=$(date -d "yesterday" +%Y-%m-%d)
+REPORT_DATE=$(date -u -d "yesterday" +%Y-%m-%d)
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -18,8 +18,10 @@ AGENTS=(
 
 for ENTRY in "${AGENTS[@]}"; do
   ID="${ENTRY%%:*}"
-  multica agent tasks "$ID" --output json > "$WORK_DIR/${ID}.json" 2>/dev/null \
-    || echo "[]" > "$WORK_DIR/${ID}.json"
+  if ! multica agent tasks "$ID" --output json > "$WORK_DIR/${ID}.json" 2>"$WORK_DIR/${ID}.err"; then
+    echo "WARNING: multica agent tasks ${ID} failed: $(cat "$WORK_DIR/${ID}.err")" >&2
+    echo "[]" > "$WORK_DIR/${ID}.json"
+  fi
 done
 
 python3 - "$REPORT_DATE" "$PROJECTS_DIR" "$WORK_DIR" "$ADMIN_EMAIL" "${AGENTS[@]}" <<'EOF'
@@ -40,12 +42,18 @@ P = {
     'output':      15e-6,
 }
 
+# Index all session JSONL files once to avoid O(tasks × files) glob per task
+SESSION_INDEX = {
+    p.rsplit('/', 1)[-1].replace('.jsonl', ''): p
+    for p in glob.glob(f"{projects_dir}/**/*.jsonl", recursive=True)
+}
+
 def parse_session(session_id):
-    matches = glob.glob(f"{projects_dir}/**/{glob.escape(session_id)}.jsonl", recursive=True)
-    if not matches:
+    path = SESSION_INDEX.get(session_id)
+    if not path:
         return None
     inp = cw = cr = out = 0
-    with open(matches[0]) as f:
+    with open(path) as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -135,10 +143,15 @@ lines.append("  input $3/MTok  |  cache_write $3.75/MTok  |  "
 body    = "\n".join(lines)
 subject = f"[neon] Token usage — {report_date}  (${grand_total:.4f})"
 
-subprocess.run(
-    ["msmtp", admin_email],
-    input=f"To: {admin_email}\nSubject: {subject}\n\n{body}".encode(),
-    check=True,
+msg = (
+    f"To: {admin_email}\n"
+    f"Subject: {subject}\n"
+    f"MIME-Version: 1.0\n"
+    f"Content-Type: text/plain; charset=utf-8\n"
+    f"Content-Transfer-Encoding: 8bit\n"
+    f"\n"
+    f"{body}"
 )
+subprocess.run(["msmtp", admin_email], input=msg.encode("utf-8"), check=True)
 print(f"Sent: {subject}")
 EOF
