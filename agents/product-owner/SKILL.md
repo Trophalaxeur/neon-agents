@@ -138,7 +138,7 @@ This gives you stack, conventions, and project purpose.
 
 **Step 3b — Live exploration (when the ticket touches existing code)**
 
-If the ticket references, modifies, or depends on existing routes, pages, components, or files — explore the repo directly **before** writing any AC:
+If the ticket references, modifies, or depends on existing files, directories, or named resources — explore the repo directly **before** writing any AC:
 
 ```bash
 REPO=/home/neonuser/.neon/repos/Trophalaxeur/<repo>

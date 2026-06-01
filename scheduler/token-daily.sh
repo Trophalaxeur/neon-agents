@@ -24,6 +24,7 @@ done
 
 python3 - "$REPORT_DATE" "$PROJECTS_DIR" "$WORK_DIR" "$ADMIN_EMAIL" "${AGENTS[@]}" <<'EOF'
 import json, glob, sys, subprocess
+from datetime import datetime
 
 report_date  = sys.argv[1]
 projects_dir = sys.argv[2]
@@ -90,7 +91,6 @@ for agent_id, agent_name in AGENTS:
         status = t.get('status', '?')
         duration_s = None
         if t.get('started_at') and t.get('completed_at'):
-            from datetime import datetime
             fmt = "%Y-%m-%dT%H:%M:%SZ"
             try:
                 d = int((datetime.strptime(t['completed_at'], fmt) -
