@@ -10,20 +10,26 @@ REPORT_DATE=$(date -d "yesterday" +%Y-%m-%d)
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-AGENT_IDS=(
-  "0785e567-9b4b-46c8-8816-81886aa672f4"
-  "4fc1abc0-c326-4798-831c-59211296207b"
+# Single source of truth: "UUID:Name" — used by both the bash fetch loop and the Python report
+AGENTS=(
+  "0785e567-9b4b-46c8-8816-81886aa672f4:JeanMichelPO"
+  "4fc1abc0-c326-4798-831c-59211296207b:JeanMichelDev"
 )
 
-for ID in "${AGENT_IDS[@]}"; do
+for ENTRY in "${AGENTS[@]}"; do
+  ID="${ENTRY%%:*}"
   multica agent tasks "$ID" --output json > "$WORK_DIR/${ID}.json" 2>/dev/null \
     || echo "[]" > "$WORK_DIR/${ID}.json"
 done
 
-python3 - "$REPORT_DATE" "$PROJECTS_DIR" "$WORK_DIR" "$ADMIN_EMAIL" <<'EOF'
+python3 - "$REPORT_DATE" "$PROJECTS_DIR" "$WORK_DIR" "$ADMIN_EMAIL" "${AGENTS[@]}" <<'EOF'
 import json, glob, sys, subprocess
 
-report_date, projects_dir, work_dir, admin_email = sys.argv[1:]
+report_date  = sys.argv[1]
+projects_dir = sys.argv[2]
+work_dir     = sys.argv[3]
+admin_email  = sys.argv[4]
+AGENTS = [tuple(e.split(':', 1)) for e in sys.argv[5:]]
 
 # Pricing (USD/token) — Sonnet 4.6
 P = {
@@ -32,11 +38,6 @@ P = {
     'cache_read':  0.3e-6,
     'output':      15e-6,
 }
-
-AGENTS = [
-    ("0785e567-9b4b-46c8-8816-81886aa672f4", "JeanMichelPO"),
-    ("4fc1abc0-c326-4798-831c-59211296207b", "JeanMichelDev"),
-]
 
 def parse_session(session_id):
     matches = glob.glob(f"{projects_dir}/**/{session_id}.jsonl", recursive=True)
