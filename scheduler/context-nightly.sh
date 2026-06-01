@@ -30,6 +30,13 @@ for REPO in $REPOS; do
       --style markdown --compress \
       --output "$CONTEXT_DIR/$REPO/context.md" \
       "$REPOS_DIR/$REPO"
+    # Append file tree (all tracked files, respects .gitignore automatically)
+    {
+      printf "\n## File tree\n\`\`\`\n"
+      git -C "$REPOS_DIR/$REPO" ls-files
+      printf "\`\`\`\n"
+      printf "\n_Context built: $(date -u +%Y-%m-%dT%H:%M:%SZ)_\n"
+    } >> "$CONTEXT_DIR/$REPO/context.md"
     echo "[$(date)] Rebuilt context for $REPO" | tee -a "$LOG"
   else
     echo "[$(date)] No changes for $REPO, skipping" | tee -a "$LOG"
