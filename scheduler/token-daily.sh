@@ -22,7 +22,6 @@ done
 
 python3 - "$REPORT_DATE" "$PROJECTS_DIR" "$WORK_DIR" "$ADMIN_EMAIL" <<'EOF'
 import json, glob, sys, subprocess
-from pathlib import Path
 
 report_date, projects_dir, work_dir, admin_email = sys.argv[1:]
 
@@ -80,15 +79,15 @@ for agent_id, agent_name in AGENTS:
 
     for t in day_tasks:
         sid    = t['result']['session_id']
-        issue  = t.get('issue_id', '?')[:8]
+        issue  = str(t.get('issue_id') or '?')[:8]
         status = t.get('status', '?')
         duration_s = None
         if t.get('started_at') and t.get('completed_at'):
             from datetime import datetime
             fmt = "%Y-%m-%dT%H:%M:%SZ"
             try:
-                d = (datetime.strptime(t['completed_at'], fmt) -
-                     datetime.strptime(t['started_at'], fmt)).seconds
+                d = int((datetime.strptime(t['completed_at'], fmt) -
+                         datetime.strptime(t['started_at'], fmt)).total_seconds())
                 duration_s = f"{d}s"
             except ValueError:
                 pass

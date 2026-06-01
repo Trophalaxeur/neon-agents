@@ -30,7 +30,7 @@ for REPO in $REPOS; do
       --style markdown --compress \
       --output "$CONTEXT_DIR/$REPO/context.md" \
       "$REPOS_DIR/$REPO"
-    # Append file tree (all tracked files, respects .gitignore automatically)
+    # Append file tree (all tracked files — git ls-files lists what git knows, not .gitignore state)
     {
       printf "\n## File tree\n\`\`\`\n"
       git -C "$REPOS_DIR/$REPO" ls-files
