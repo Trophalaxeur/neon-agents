@@ -245,6 +245,7 @@ COMPLEXITY="<Simple|Medium|Complex>"
 EXEC_LABELS="<JeanMichelable|JeanMichelable+Human>"
 multica issue update <id> --description "<refined markdown>" && \
 multica issue status <id> todo && \
+multica issue assign <id> --to-id 4fc1abc0-c326-4798-831c-59211296207b && \
 multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}. Executability: ${EXEC_LABELS}. @JeanMichelDev please propose technical solutions." && \
 multica issue rerun <id> && \
 printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}] — awaiting technical proposals\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
