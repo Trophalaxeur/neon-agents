@@ -93,20 +93,35 @@ Accumulate all behavioral instructions. Later instructions override earlier ones
 
 Read the workdir `CLAUDE.md`. Extract the issue ID, title, and description.
 
-**Step 2 — Load repository context (mandatory)**
+**Step 2 — Choose context level, then load**
+
+Before loading anything, read the ticket title, description, and AC items.
+Decide which context is appropriate:
+
+| Use `context.md` (light) | Use `context-dev.md` (targeted) |
+|---|---|
+| Single named file, no pattern-matching needed | AC items modify or extend existing components/classes |
+| Non-code changes (text, docs, config value) | Multiple implementation approaches possible |
+| Trivial scope — one obvious solution | Choice requires knowing existing patterns, types, conventions |
+| | Complexity is Medium or Complex |
+
+State your choice in a comment before proceeding:
+`"Using [light/targeted] context — [one sentence reason]."`
+
+```bash
+# Light context (always available)
+cat /home/neonuser/.neon/context/<repo>/context.md
+
+# Targeted context (use when above criteria met)
+cat /home/neonuser/.neon/context/<repo>/context-dev.md
+# Fallback if context-dev.md missing: use context.md and note it
+```
 
 Identify the relevant repo using this priority order:
 1. Multica project field → workspace mapping above
 2. Explicit repo mention in description/comments
 3. Inference from ticket content
 4. No match → proceed without repo context; document why in your comment
-
-```bash
-cat /home/neonuser/.neon/context/<repo>/context.md
-# Fallback if missing:
-cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/CLAUDE.md
-cat /home/neonuser/.neon/repos/Trophalaxeur/<repo>/README.md
-```
 
 **Step 2b — Coherence check (mandatory)**
 

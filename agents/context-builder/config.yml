@@ -1,10 +1,13 @@
 repos:
   - owner: Trophalaxeur
     name: neon-agents
+    # no dev_include → no context-dev.md (skill/config files, no source tree to explore)
   - owner: Trophalaxeur
     name: homelab-gallium
+    dev_include: "ansible/roles/**,ansible/group_vars/**,terraform/**"
   - owner: Trophalaxeur
     name: bismuth-blog
+    dev_include: "src/pages/**,src/components/**,src/utils/**,src/content.config.ts,src/site.config.ts"
 
 # Reference list only — context-nightly.sh passes these as repomix --include flags.
 # Update both here and the INCLUDE_GLOBS variable in context-nightly.sh when changing.

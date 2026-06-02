@@ -15,9 +15,11 @@ trap 'echo "context-nightly.sh failed at $(date)${FAILED_REPO:+ for repo: $FAILE
 # Step 0: self-update the platform
 git -C /opt/neon-agents pull
 
-REPOS=$(yq -r '.repos[].name' "$CONFIG")
+REPO_COUNT=$(yq -r '.repos | length' "$CONFIG")
 
-for REPO in $REPOS; do
+for i in $(seq 0 $((REPO_COUNT - 1))); do
+  REPO=$(yq -r ".repos[$i].name" "$CONFIG")
+  DEV_INCLUDE=$(yq -r ".repos[$i].dev_include // \"\"" "$CONFIG")
   FAILED_REPO="$REPO"
   git -C "$REPOS_DIR/$REPO" pull
   LAST_CHANGE=$(git -C "$REPOS_DIR/$REPO" log -1 --format=%ct 2>/dev/null)
@@ -25,18 +27,32 @@ for REPO in $REPOS; do
   LAST_BUILD=$(stat -c %Y "$CONTEXT_DIR/$REPO/context.md" 2>/dev/null || echo 0)
   if [ "$LAST_CHANGE" -gt "$LAST_BUILD" ] || [ "$1" = "--force" ]; then
     mkdir -p "$CONTEXT_DIR/$REPO"
+
+    # Light context (orientation: CLAUDE.md, README, configs)
     repomix \
       --include "$INCLUDE_GLOBS" \
       --style markdown --compress \
       --output "$CONTEXT_DIR/$REPO/context.md" \
       "$REPOS_DIR/$REPO"
-    # Append file tree of all tracked files
     {
       printf "\n## File tree\n\`\`\`\n"
       git -C "$REPOS_DIR/$REPO" ls-files
       printf "\`\`\`\n"
       printf "\n_Context built: $(date -u +%Y-%m-%dT%H:%M:%SZ)_\n"
     } >> "$CONTEXT_DIR/$REPO/context.md"
+
+    # Dev context (targeted: source files for JeanMichelDev proposer mode)
+    if [ -n "$DEV_INCLUDE" ]; then
+      repomix \
+        --include "$DEV_INCLUDE" \
+        --style markdown --compress \
+        --output "$CONTEXT_DIR/$REPO/context-dev.md" \
+        "$REPOS_DIR/$REPO"
+      printf "\n_Context built: $(date -u +%Y-%m-%dT%H:%M:%SZ)_\n" \
+        >> "$CONTEXT_DIR/$REPO/context-dev.md"
+      echo "[$(date)] Rebuilt context-dev for $REPO" | tee -a "$LOG"
+    fi
+
     echo "[$(date)] Rebuilt context for $REPO" | tee -a "$LOG"
   else
     echo "[$(date)] No changes for $REPO, skipping" | tee -a "$LOG"
