@@ -173,7 +173,7 @@ multica issue update <id> --description "<existing_description>\n\n===========\n
 multica issue status <id> todo && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
 multica issue comment add <id> --content "Technical solutions proposed. Recommendation: Option <X>. @Trophalaxeur please review and indicate your preferred solution (or say nothing to go with the recommendation)." && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Technical solutions ready\n\n<TITLE>\nRecommendation: Option <X>\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Technical solutions ready\n\n<TITLE>\nRecommendation: Option <X>\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 ```
 
 ---
@@ -290,7 +290,7 @@ PR_URL="<pr-url>"
 multica issue status <id> in_review && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
 multica issue comment add <id> --content "Implementation complete. PR: ${PR_URL}. Awaiting your review." && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — PR ready for review\n\n<TITLE>\nPR: ${PR_URL}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — PR ready for review\n\n<TITLE>\nPR: ${PR_URL}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 ```
 
 ---
@@ -304,7 +304,7 @@ REASON="<clear description of what failed and what is needed to unblock>"
 multica issue status <id> blocked && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
 multica issue comment add <id> --content "**Blocked**: ${REASON}" && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Blocked\n\n<TITLE>\n${REASON}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Blocked\n\n<TITLE>\n${REASON}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 ```
 
 ---

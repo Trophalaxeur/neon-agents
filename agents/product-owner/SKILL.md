@@ -248,7 +248,7 @@ multica issue status <id> todo && \
 multica issue assign <id> --to-id 4fc1abc0-c326-4798-831c-59211296207b && \
 multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}. Executability: ${EXEC_LABELS}. @JeanMichelDev please propose technical solutions." && \
 multica issue rerun <id> && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}] — awaiting technical proposals\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}] — awaiting technical proposals\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── REFINE — Human only (assigns directly to human) ─────────────────────────
 SUMMARY="<one-line functional summary>"
@@ -258,20 +258,20 @@ multica issue update <id> --description "<refined markdown>" && \
 multica issue status <id> todo && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
 multica issue comment add <id> --content "Refined. ${SUMMARY}. Complexity: ${COMPLEXITY}. Executability: ${EXEC_LABELS}." && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}]\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Refined [${EXEC_LABELS}]\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\nExecutability: ${EXEC_LABELS}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── UNCLEAR or TOO_COMPLEX ───────────────────────────────────────────────────
 DECISION="<UNCLEAR|TOO_COMPLEX>"
 REASON="<explanation and missing info>"
 multica issue comment add <id> --content "**Decision: ${DECISION}**\n\n${REASON}\n\nThis ticket will remain blocked until the issue is resolved." && \
 multica issue status <id> blocked && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — ${DECISION} (blocked)\n\n<TITLE>\n${REASON}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — ${DECISION} (blocked)\n\n<TITLE>\n${REASON}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── SPLIT — propose ──────────────────────────────────────────────────────────
 PROPOSAL="<split proposal body>"
 multica issue comment add <id> --content "${PROPOSAL}" && \
 multica issue status <id> blocked && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split proposed (blocked)\n\n<TITLE>\n${PROPOSAL}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split proposed (blocked)\n\n<TITLE>\n${PROPOSAL}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── SPLIT resolution ─────────────────────────────────────────────────────────
 multica issue create --project <inferred-project> --title "<sub-ticket title>" \
@@ -280,7 +280,7 @@ multica issue create --project <inferred-project> --title "<sub-ticket title>" \
 SUB_IDS="<id1>, <id2>"
 multica issue comment add <id> --content "Sub-tickets created: ${SUB_IDS}. They are drafts — @JeanMiPO on each to refine fully." && \
 multica issue status <id> cancelled && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split created\n\n<TITLE>\nSub-tickets: ${SUB_IDS}\n\nhttps://multica.ai/851c419f-bd93-4194-9b55-69bc19a16e6d/issues/<KEY>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] <KEY> — Split created\n\n<TITLE>\nSub-tickets: ${SUB_IDS}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 ```
 
 Confirmed CLI syntax:
