@@ -108,6 +108,14 @@ Decide which context is appropriate:
 State your choice in a comment before proceeding:
 `"Using [light/targeted] context — [one sentence reason]."`
 
+Identify the relevant repo using this priority order:
+1. Multica project field → workspace mapping above
+2. Explicit repo mention in description/comments
+3. Inference from ticket content
+4. No match → proceed without repo context; document why in your comment
+
+Then load the chosen context:
+
 ```bash
 # Light context (always available)
 cat /home/neonuser/.neon/context/<repo>/context.md
@@ -116,12 +124,6 @@ cat /home/neonuser/.neon/context/<repo>/context.md
 cat /home/neonuser/.neon/context/<repo>/context-dev.md
 # Fallback if context-dev.md missing: use context.md and note it
 ```
-
-Identify the relevant repo using this priority order:
-1. Multica project field → workspace mapping above
-2. Explicit repo mention in description/comments
-3. Inference from ticket content
-4. No match → proceed without repo context; document why in your comment
 
 **Step 2b — Coherence check (mandatory)**
 

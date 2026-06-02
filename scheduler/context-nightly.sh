@@ -15,17 +15,16 @@ trap 'echo "context-nightly.sh failed at $(date)${FAILED_REPO:+ for repo: $FAILE
 # Step 0: self-update the platform
 git -C /opt/neon-agents pull
 
-REPO_COUNT=$(yq -r '.repos | length' "$CONFIG")
-
-for i in $(seq 0 $((REPO_COUNT - 1))); do
-  REPO=$(yq -r ".repos[$i].name" "$CONFIG")
-  DEV_INCLUDE=$(yq -r ".repos[$i].dev_include // \"\"" "$CONFIG")
+while IFS='|' read -r REPO DEV_INCLUDE; do
   FAILED_REPO="$REPO"
   git -C "$REPOS_DIR/$REPO" pull
   LAST_CHANGE=$(git -C "$REPOS_DIR/$REPO" log -1 --format=%ct 2>/dev/null)
   [ -z "$LAST_CHANGE" ] && LAST_CHANGE=1
   LAST_BUILD=$(stat -c %Y "$CONTEXT_DIR/$REPO/context.md" 2>/dev/null || echo 0)
-  if [ "$LAST_CHANGE" -gt "$LAST_BUILD" ] || [ "$1" = "--force" ]; then
+  # Also rebuild if context-dev.md is expected but missing
+  DEV_MISSING=0
+  [ -n "$DEV_INCLUDE" ] && [ ! -f "$CONTEXT_DIR/$REPO/context-dev.md" ] && DEV_MISSING=1
+  if [ "$LAST_CHANGE" -gt "$LAST_BUILD" ] || [ "$1" = "--force" ] || [ "$DEV_MISSING" -eq 1 ]; then
     mkdir -p "$CONTEXT_DIR/$REPO"
 
     # Light context (orientation: CLAUDE.md, README, configs)
@@ -58,4 +57,4 @@ for i in $(seq 0 $((REPO_COUNT - 1))); do
     echo "[$(date)] No changes for $REPO, skipping" | tee -a "$LOG"
   fi
   FAILED_REPO=""
-done
+done < <(yq -r '.repos[] | [.name, (.dev_include // "")] | join("|")' "$CONFIG")
