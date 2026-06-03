@@ -17,7 +17,11 @@ git -C /opt/neon-agents pull
 
 while IFS='|' read -r REPO DEV_INCLUDE; do
   FAILED_REPO="$REPO"
-  git -C "$REPOS_DIR/$REPO" pull
+  git -C "$REPOS_DIR/$REPO" fetch origin
+  DEFAULT_BRANCH=$(git -C "$REPOS_DIR/$REPO" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' \
+    || git -C "$REPOS_DIR/$REPO" remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+  git -C "$REPOS_DIR/$REPO" checkout "$DEFAULT_BRANCH"
+  git -C "$REPOS_DIR/$REPO" reset --hard "origin/$DEFAULT_BRANCH"
   LAST_CHANGE=$(git -C "$REPOS_DIR/$REPO" log -1 --format=%ct 2>/dev/null)
   [ -z "$LAST_CHANGE" ] && LAST_CHANGE=1
   LAST_BUILD=$(stat -c %Y "$CONTEXT_DIR/$REPO/context.md" 2>/dev/null || echo 0)
