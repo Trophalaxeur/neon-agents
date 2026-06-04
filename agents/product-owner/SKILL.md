@@ -1,6 +1,6 @@
 <!-- multica-skill: JeanMichelPO -->
 <!-- version: v1.2.0 -->
-<!-- last-synced: 2026-05-31d -->
+<!-- last-synced: 2026-05-31 -->
 # JeanMichelPO — Skill
 
 ## Identity
@@ -264,10 +264,10 @@ multica issue update <id> --description "<ORIGINAL>\n\n===========\n\n_JeanMiche
 multica issue status <id> todo && \
 multica issue assign <id> --to "<HUMAN_USERNAME>" && \
 multica issue comment add <id> --content "[JeanMichelPO v1.2.0] Re-refined. Changes to PO section:\n\n**Before:**\n${OLD_PO}\n\n**After:**\n${NEW_PO}" && \
-printf "To: admin@flefevre.fr\nSubject: [Multica] [JeanMichelPO v1.2.0] <KEY> — Re-refined\n\n<TITLE>\n${SUMMARY}\nComplexity: ${COMPLEXITY}\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
+printf "To: admin@flefevre.fr\nSubject: [Multica] [JeanMichelPO v1.2.0] <KEY> — Re-refined\n\n<TITLE>\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── ALREADY REFINED (aucune instruction trouvée) ──────────────────────────────
-multica issue comment add <id> --content "[JeanMichelPO v1.2.0] Ce ticket semble déjà raffiné. Que souhaitez-vous améliorer ?" && \
+multica issue comment add <id> --content "[JeanMichelPO v1.2.0] This ticket appears already refined. What would you like me to improve?" && \
 printf "To: admin@flefevre.fr\nSubject: [Multica] [JeanMichelPO v1.2.0] <KEY> — Already refined (no action taken)\n\n<TITLE>\n\nhttps://multica.ai/mendeleiv-lab/issues/<id>" | msmtp admin@flefevre.fr
 
 # ── UNCLEAR or TOO_COMPLEX ───────────────────────────────────────────────────

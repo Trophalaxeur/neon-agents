@@ -29,7 +29,7 @@
 3. Check **"Allow write access"** and save
 4. Re-trigger JeanMichelDev on the ticket: `multica issue rerun <issue-id>`
 
-JeanMichelDev will detect the existing uncommitted work (branch `agent/jeanmicheldev/<task-id>` in the local clone) and resume from where it left off — or start a fresh branch if no PR was opened yet.
+When JeanMichelDev is re-triggered, it checks for uncommitted changes first — if the previous run left a dirty working tree, Dev will stop and ask you to resolve it. Clean up by manually pushing or discarding the changes, then re-trigger. Dev will then detect the prior branch in comments with no associated PR (Priority 3 in branch detection) and **start a new branch** rather than resuming the old one.
 
 ---
 
