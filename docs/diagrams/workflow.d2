@@ -7,8 +7,8 @@ direction: down
 #   A. Nightly context refresh — runs unattended at 01:00
 #   B. Ticket → Agent execution → Output — triggered on demand
 #
-# Inter-agent handoff: agent posts a comment with @NextAgent,
-# Multica detects it and enqueues a new task → the cycle restarts.
+# Inter-agent handoff: always manual — the human reviews the output,
+# then posts a new @mention to trigger the next agent if needed.
 # =============================================================================
 
 # ─── Operator (Thallium) ─────────────────────────────────────────────────────
@@ -70,10 +70,10 @@ neon: "LXC neon · <neon-ip> · user neonuser" {
     style.fill: "#fffbeb"
     style.stroke: "#f59e0b"
 
-    s1: "1. Read SKILL.md\n(identity · process · rules · workspace mapping)"
+    s1: "1. Read SKILL.md\n(identity · process · workspace mapping)"
     s2: "2. Read context.md\n(repo structure · API · config · types)"
     s3: "3. Execute process\n(decide · draft · validate output)"
-    s4: "4. Output via multica CLI\n(update description · set status\n· post comment · @mention next agent)"
+    s4: "4. Output via multica CLI\n(update description · set status\n· post comment · email)"
 
     s1 -> s2 -> s3 -> s4
   }
@@ -116,6 +116,7 @@ neon.session.s2 -> neon.cache: ""
 neon.session.s4 -> multica.kanban: "update ticket"
 neon.session.s4 -> email: "msmtp notification"
 
-# ─── Flow F: Inter-agent handoff ──────────────────────────────────────────────
+# ─── Flow F: Manual inter-agent handoff ──────────────────────────────────────
 
-multica.kanban -> multica.task_q: "comment @AgentName\n→ new task enqueued\n(chain continues)"
+multica.kanban -> operator: "email notification\n→ human reviews output"
+operator.mention -> multica.task_q: "human posts @NextAgent\nto trigger next step"

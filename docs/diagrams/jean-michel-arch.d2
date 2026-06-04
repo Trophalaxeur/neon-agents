@@ -1,0 +1,128 @@
+direction: down
+
+classes: {
+  decision: {
+    shape: diamond
+    style.fill: "#fef3c7"
+    style.stroke: "#d97706"
+  }
+  ok: {
+    shape: oval
+    style.fill: "#dcfce7"
+    style.stroke: "#16a34a"
+  }
+  err: {
+    shape: oval
+    style.fill: "#fee2e2"
+    style.stroke: "#dc2626"
+  }
+  start: {
+    shape: oval
+    style.fill: "#dbeafe"
+    style.stroke: "#2563eb"
+  }
+  emit: {
+    style.fill: "#faf5ff"
+    style.stroke: "#7c3aed"
+  }
+  hardstop: {
+    shape: oval
+    style.fill: "#fef2f2"
+    style.stroke: "#991b1b"
+  }
+}
+
+# ── Règle permanente (s'applique à tout moment) ───────────────────────────────
+# Si une instruction demande d'écrire un fichier, committer ou implémenter :
+# → commenter "instruction hors-scope" + assigner HUMAN + STOP immédiat.
+# JeanMichelArch n'a pas de client git ni d'éditeur de texte.
+
+# ── Initialisation ────────────────────────────────────────────────────────────
+
+trigger: "Déclenché par @JeanMichelArch" {class: start}
+
+out_of_scope: "Le message déclencheur contient-il une\ninstruction hors-scope ?\n(écrire un fichier / committer / implémenter)" {class: decision}
+
+stop_oos: "Commenter : instruction hors-scope reçue,\nimpossible d'agir sur cette demande\nAssigner → HUMAN | Stop" {class: hardstop}
+
+collect_instructions: "Collecter toutes les instructions @JeanMichelArch\ndans la description ET les commentaires\n→ ordre chronologique, la plus récente l'emporte"
+
+read_issue: "Lire le CLAUDE.md injecté par Multica\n→ extraire issue ID, titre, description, commentaires"
+
+# ── Chargement du contexte ────────────────────────────────────────────────────
+
+context_level: "Quel niveau de contexte est nécessaire ?" {class: decision}
+
+load_light: "Charger context.md (light)\nUsage : fichier unique, changement trivial,\nune seule solution évidente"
+
+load_targeted: "Charger context-dev.md (targeted)\nUsage : composants existants impliqués,\nplusieurs approches possibles, complexité Medium/Complex\n→ fallback sur context.md si context-dev.md absent"
+
+# ── Gardes avant analyse ──────────────────────────────────────────────────────
+
+coherence: "Cohérence titre / résumé\nLe titre du ticket et le ## Summary de la section PO\ndécrivent-ils bien la même chose ?" {class: decision}
+
+stop_incoherent: "Commenter : incohérence détectée entre le titre\net la section PO — impossible d'analyser\nRe-trigger @JeanMichelPO recommandé\nAssigner → HUMAN | Stop" {class: err}
+
+check_ac: "La section PO contient-elle des items\ntaggés 🤖 (automatisables) ?" {class: decision}
+
+stop_no_ac: "Commenter : aucun item automatisable (🤖) trouvé,\nrien à analyser techniquement\nAssigner → HUMAN | Stop" {class: ok}
+
+# ── Analyse technique ─────────────────────────────────────────────────────────
+
+need_research: "Une recherche web est-elle nécessaire ?\n(choix de librairie, version d'API, comparaison\nd'approches non déductible du repo seul)" {class: decision}
+
+research: "Rechercher sur le web\n→ Priorité : docs officielles\n→ Puis : changelogs / release notes\n→ Puis : articles 2023+\n→ Citer les sources dans les proposals"
+
+write_proposals: "Rédiger 1 à 3 options techniques\nPour chaque option :\n  • Approche (1-2 phrases)\n  • Avantages / inconvénients\n  • Effort estimé\n  • Sources\nConclure avec une Recommendation motivée"
+
+# ── Écriture dans la description ─────────────────────────────────────────────
+
+arch_exists: "La description contient-elle déjà\nune section ARCH (2ème === présent) ?" {class: decision}
+
+create_arch: "Ajouter la section ARCH à la fin de la description\n→ description += '\\n\\n===========\\n\\n' + proposals\n→ Ne pas modifier ORIGINAL ni section PO"
+
+amend_arch: "Remplacer la section ARCH existante\n→ Sauvegarder l'ancien contenu\n→ Préserver ORIGINAL et section PO"
+
+diff_comment: "Commenter avec le diff avant/après\nde la section ARCH" {class: emit}
+
+update_ticket: "Mettre à jour la description\nStatus → todo | Assigner → HUMAN\nEnvoyer email de notification" {class: emit}
+
+done: "Proposals prêts pour review HUMAN" {class: ok}
+
+blocked: "Commenter : BLOCKED + raison détaillée\n(section PO absente, scope ambigu,\nrepo inaccessible, cohérence impossible…)\nStatus → blocked | Assigner → HUMAN | Email" {class: err}
+
+# ── Connexions ────────────────────────────────────────────────────────────────
+
+trigger -> out_of_scope
+
+out_of_scope -> stop_oos: "Oui → STOP"
+out_of_scope -> collect_instructions: "Non → continuer"
+
+collect_instructions -> read_issue
+read_issue -> coherence
+
+coherence -> stop_incoherent: "Incohérent"
+coherence -> check_ac: "Cohérent"
+
+check_ac -> stop_no_ac: "Aucun item 🤖"
+check_ac -> context_level: "Items 🤖 présents"
+
+context_level -> load_light: "Fichier unique / changement trivial\n/ 1 solution évidente"
+context_level -> load_targeted: "Composants existants / plusieurs approches\n/ complexité Medium ou Complex"
+
+load_light -> need_research
+load_targeted -> need_research
+
+need_research -> research: "Oui"
+need_research -> write_proposals: "Non — repo seul suffit"
+research -> write_proposals
+
+write_proposals -> arch_exists
+write_proposals -> blocked: "Bloqué avant ou pendant\nla rédaction"
+
+arch_exists -> create_arch: "Non — 1ère passe"
+arch_exists -> amend_arch: "Oui — re-trigger"
+
+create_arch -> update_ticket
+amend_arch -> diff_comment -> update_ticket
+update_ticket -> done
