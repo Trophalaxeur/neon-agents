@@ -23,9 +23,16 @@ See [docs/architecture.md](docs/architecture.md) for diagrams and a full compone
 
 ## Agents
 
-| Name | Nickname | Role | Trigger |
-|---|---|---|---|
-| JeanMichelPO | JeanMiPO | Product Owner — refines tickets | `@JeanMiPO` in a Multica comment |
+| Name | Role | Trigger |
+|---|---|---|
+| JeanMichelPO | Product Owner — refines tickets, writes PO section | `@JeanMichelPO` in a Multica comment |
+| JeanMichelArch | Software Architect — proposes technical solutions, writes ARCH section | `@JeanMichelArch` in a Multica comment |
+| JeanMichelDev | Developer — implements chosen solution, opens PR | `@JeanMichelDev` in a Multica comment |
+
+Typical flow: create ticket → trigger PO → review → trigger Arch → pick option → trigger Dev → review PR.
+Each handoff is manual — no agent triggers another automatically.
+
+See [docs/agents/](docs/agents/) for full specifications.
 
 ---
 

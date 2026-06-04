@@ -1,0 +1,115 @@
+direction: down
+
+classes: {
+  decision: {
+    shape: diamond
+    style.fill: "#fef3c7"
+    style.stroke: "#d97706"
+  }
+  ok: {
+    shape: oval
+    style.fill: "#dcfce7"
+    style.stroke: "#16a34a"
+  }
+  err: {
+    shape: oval
+    style.fill: "#fee2e2"
+    style.stroke: "#dc2626"
+  }
+  start: {
+    shape: oval
+    style.fill: "#dbeafe"
+    style.stroke: "#2563eb"
+  }
+  emit: {
+    style.fill: "#faf5ff"
+    style.stroke: "#7c3aed"
+  }
+}
+
+# ── Initialisation ────────────────────────────────────────────────────────────
+
+trigger: "Déclenché par @JeanMichelPO" {class: start}
+
+collect_instructions: "Collecter toutes les instructions @JeanMichelPO\ndans la description ET les commentaires\n→ ordre chronologique, la plus récente l'emporte"
+
+read_issue: "Lire le CLAUDE.md injecté par Multica\n→ extraire issue ID, titre, description, commentaires"
+
+parse_desc: "Parser la description en blocs :\n① ORIGINAL — avant le 1er ===  (à conserver tel quel)\n② Section PO — entre 1er et 2ème === (à sauvegarder si présente)\n③ Section ARCH — après 2ème === (à ne jamais modifier)"
+
+load_context: "Charger context.md du repo concerné\n→ stack, conventions du projet, objectif"
+
+need_explore: "Le ticket référence du code ou\ndes éléments existants dans le repo ?" {class: decision}
+
+explore_repo: "Explorer le repo en lecture seule\n(find / cat / grep)\n→ vérifier que les éléments mentionnés existent"
+
+# ── Garde : déjà raffiné ? ────────────────────────────────────────────────────
+
+already_refined: "Description contient déjà `_JeanMichelPO v`\n(signature d'une passe PO précédente)\nET aucune instruction @JeanMichelPO trouvée ?" {class: decision}
+
+stop_already: "Commenter : 'Ce ticket semble déjà raffiné.\nQue souhaitez-vous améliorer ?'\nStatut et assignee inchangés" {class: ok}
+
+# ── Décision principale ───────────────────────────────────────────────────────
+
+evaluate: "Évaluer le ticket :\nclareté, complétude, périmètre" {class: decision}
+
+# ── Chemin REFINE ─────────────────────────────────────────────────────────────
+
+is_rerefine: "La section PO existe déjà ?\n(re-trigger d'un ticket déjà raffiné)" {class: decision}
+
+write_po: "Rédiger la section PO\n→ Summary, AC (🤖/👤 taggés), Expected Result,\n   Complexity, Notes\n→ Préfixer avec le bloc ORIGINAL + ===\n→ Conserver la section ARCH si présente"
+
+amend_po: "Amender la section PO existante\n→ Réécrire uniquement le bloc PO\n→ Ne pas toucher ORIGINAL ni section ARCH"
+
+diff_comment: "Commenter avec le diff avant/après\nde la section PO" {class: emit}
+
+update_ticket: "Mettre à jour la description\nStatus → todo | Assigner → HUMAN\nEnvoyer email de notification" {class: emit}
+
+done: "Ticket prêt pour review HUMAN" {class: ok}
+
+# ── Chemins d'erreur ──────────────────────────────────────────────────────────
+
+unclear: "Commenter : UNCLEAR\n→ Lister explicitement les infos manquantes\n   ou les ambiguïtés bloquantes\nStatus → blocked | Email" {class: err}
+
+complex: "Commenter : TOO_COMPLEX\n→ Expliquer pourquoi le périmètre dépasse\n   un sprint ou une équipe\nStatus → blocked | Email" {class: err}
+
+# ── Chemin SPLIT ──────────────────────────────────────────────────────────────
+
+split_propose: "Commenter : proposition de split\n→ Titre + scope de chaque sous-ticket\n→ Justification du découpage\nStatus → blocked | Email" {class: emit}
+
+split_confirm: "L'instruction 'créer les tickets'\na été reçue dans un commentaire ?" {class: decision}
+
+split_create: "Créer les sous-tickets dans Multica\nCommenter les IDs créés\nStatus → cancelled | Email" {class: ok}
+
+split_wait: "Attendre la confirmation HUMAN" {class: ok}
+
+# ── Connexions ────────────────────────────────────────────────────────────────
+
+trigger -> collect_instructions
+collect_instructions -> read_issue
+read_issue -> parse_desc
+parse_desc -> load_context
+load_context -> need_explore
+
+need_explore -> explore_repo: "Oui"
+need_explore -> already_refined: "Non"
+explore_repo -> already_refined
+
+already_refined -> stop_already: "Oui → arrêter"
+already_refined -> evaluate: "Non → continuer"
+
+evaluate -> is_rerefine: "Clair, scopé, actionnable → REFINE"
+evaluate -> unclear: "Ambigu ou incomplet → UNCLEAR"
+evaluate -> complex: "Trop large pour un sprint → TOO_COMPLEX"
+evaluate -> split_propose: "Plusieurs livrables indépendants → SPLIT"
+
+is_rerefine -> write_po: "Non — 1ère passe"
+is_rerefine -> amend_po: "Oui — re-trigger"
+
+write_po -> update_ticket
+amend_po -> diff_comment -> update_ticket
+update_ticket -> done
+
+split_propose -> split_confirm
+split_confirm -> split_create: "Oui"
+split_confirm -> split_wait: "Non — en attente"

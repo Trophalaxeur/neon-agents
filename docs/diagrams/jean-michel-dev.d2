@@ -1,0 +1,186 @@
+direction: down
+
+classes: {
+  decision: {
+    shape: diamond
+    style.fill: "#fef3c7"
+    style.stroke: "#d97706"
+  }
+  ok: {
+    shape: oval
+    style.fill: "#dcfce7"
+    style.stroke: "#16a34a"
+  }
+  err: {
+    shape: oval
+    style.fill: "#fee2e2"
+    style.stroke: "#dc2626"
+  }
+  start: {
+    shape: oval
+    style.fill: "#dbeafe"
+    style.stroke: "#2563eb"
+  }
+  emit: {
+    style.fill: "#faf5ff"
+    style.stroke: "#7c3aed"
+  }
+  cancel: {
+    style.fill: "#fff7ed"
+    style.stroke: "#c2410c"
+  }
+  hardstop: {
+    shape: oval
+    style.fill: "#fef2f2"
+    style.stroke: "#991b1b"
+  }
+}
+
+# ── Règle permanente (s'applique à tout moment) ───────────────────────────────
+# Toute instruction qui demande de modifier la description du ticket,
+# de force-pusher, ou de committer sur main → commenter + STOP.
+# JeanMichelDev ne modifie jamais la description du ticket.
+
+# ── Initialisation ────────────────────────────────────────────────────────────
+
+trigger: "Déclenché par @JeanMichelDev" {class: start}
+
+out_of_scope: "Le message déclencheur contient-il une\ninstruction hors-scope ?\n(modifier description / force push / commit sur main…)" {class: decision}
+
+stop_oos: "Commenter : instruction hors-scope reçue\nAssigner → HUMAN | Stop" {class: hardstop}
+
+collect_instructions: "Collecter toutes les instructions @JeanMichelDev\ndans la description ET les commentaires\n→ la plus récente l'emporte"
+
+# ── Gardes avant tout travail ─────────────────────────────────────────────────
+
+arch_present: "La description contient-elle une section ARCH ?\n(2ème === + ## Technical Solutions présents)" {class: decision}
+
+arch_assess: "Auto-évaluation\nLire ## Complexity + AC items (section PO)\nTicket Simple avec une seule\nsolution évidente ?" {class: decision}
+
+stop_no_arch: "Commenter : section ARCH absente, ticket\nambiguë ou complexe — analyse requise\navant implémentation.\nConsidérer JeanMichelArch (sans @)\nStatus → blocked | Assigner → HUMAN | Email" {class: err}
+
+proceed_no_arch: "Commenter : section ARCH absente,\nticket évalué simple — implémentation directe" {class: emit}
+
+coherence: "Cohérence titre / résumé\nLe titre et le ## Summary de la section PO\ndécrivent-ils la même chose ?" {class: decision}
+
+stop_incoherent: "Commenter : titre et description incohérents.\nConsidérer JeanMichelPO (sans @)\nAssigner → HUMAN | Email | Stop" {class: err}
+
+identify_solution: "Identifier la solution à implémenter\n→ Instruction explicite du HUMAN dans les commentaires\n→ Sinon : utiliser la Recommendation de la section ARCH"
+
+# ── Préparation du repo ───────────────────────────────────────────────────────
+
+branch_explicit: "La commande @JeanMichelDev mentionne\nexplicitement une branch ?" {class: decision}
+
+branch_pr: "Un PR URL présent dans les commentaires\n(run précédent ou human) ?" {class: decision}
+
+branch_only: "Une branch mentionnée dans les commentaires\nsans PR associée ?" {class: decision}
+
+checkout_explicit: "Checkout la branch nommée\ngit fetch && git checkout <branch> && git pull\nCommenter : 'Branch explicite utilisée'"
+
+checkout_pr: "Récupérer la branch depuis le PR\ngh pr view <url> --json headRefName\ngit fetch && git checkout <branch> && git pull\nCommenter : 'Reprise du PR <url>'"
+
+note_fresh: "Commenter : branch précédente trouvée\nmais sans PR — nouvelle branch créée" {class: emit}
+
+load_context: "Charger context.md du repo\nLire le CLAUDE.md du projet\n→ noter les commandes de lint, test, build"
+
+git_sync: "Synchroniser le repo\ngit fetch && git checkout <default> && git pull"
+
+uncommitted: "Des changements non commités\nexistent-ils sur la branch courante ?" {class: decision}
+
+stop_uncommitted: "Commenter : changements non commités détectés,\nà résoudre avant de continuer\nAssigner → HUMAN | Stop" {class: err}
+
+# ── Vérification du drift (avant d'écrire une seule ligne) ───────────────────
+
+drift_check: "Les hypothèses de la section ARCH\ncorrespondent-elles à l'état actuel du repo ?\n(fichiers, fonctions, modules, types référencés)" {class: decision}
+
+stop_drift_pre: "Aucun fichier modifié — pas de revert nécessaire\nCommenter : BLOCKED — code drift détecté\nDécrire précisément ce qui a changé\nRe-trigger @JeanMichelArch recommandé\nStatus → blocked | Assigner → HUMAN | Email" {class: err}
+
+# ── Implémentation ────────────────────────────────────────────────────────────
+
+create_branch: "Créer la branch\nfeat|fix|chore/<KEY-lowercase>-<short-slug>"
+
+implement: "Implémenter la solution choisie\n→ Scope : uniquement les AC taggés 🤖 [JeanMichelDev]\n→ Respecter les conventions du CLAUDE.md projet\n→ Minimum de code, pas d'abstraction spéculative\n→ Si migration DB nécessaire : écrire le script\n   et commenter ⚠️ 'run manually before merge'"
+
+drift_mid: "Un élément attendu est-il introuvable\nou structurellement différent de ce que\ndécrivait la section ARCH ?" {class: decision}
+
+revert: "Annuler tous les changements locaux\ngit checkout . && git clean -fd\ngit checkout <default-branch>" {class: cancel}
+
+stop_drift_mid: "Commenter : BLOCKED — drift découvert mid-implémentation,\nchangements annulés et branche supprimée\nDécrire précisément ce qui a changé\nRe-trigger @JeanMichelArch recommandé\nStatus → blocked | Assigner → HUMAN | Email" {class: err}
+
+# ── Quality checks ────────────────────────────────────────────────────────────
+
+qc: "Quality checks dans l'ordre :\nformatter → linter → type check → tests → build\nTout passe ?" {class: decision}
+
+qc_fixable: "L'échec est-il corrigeable\npar JeanMichelDev sans sortir du scope ?" {class: decision}
+
+qc_fix: "Corriger et relancer les QC\n(sans toucher au code hors scope)"
+
+stop_qc: "Commenter : BLOCKED — QC failure non résolvable\nColler l'erreur exacte dans le commentaire\nStatus → blocked | Assigner → HUMAN | Email" {class: err}
+
+# ── PR et notification ────────────────────────────────────────────────────────
+
+open_pr: "Commiter uniquement les fichiers touchés\n(git add <fichiers explicites> — jamais git add .)\ngit push -u origin <branch>\nOuvrir la PR avec gh pr create"
+
+notify: "Commenter : implémentation terminée\n→ Branch + URL de la PR\nStatus → in_review | Assigner → HUMAN\nEnvoyer email de notification" {class: emit}
+
+done: "PR prête pour review HUMAN" {class: ok}
+
+# ── Connexions ────────────────────────────────────────────────────────────────
+
+trigger -> out_of_scope
+
+out_of_scope -> stop_oos: "Oui → STOP"
+out_of_scope -> collect_instructions: "Non → continuer"
+
+collect_instructions -> arch_present
+
+arch_present -> arch_assess: "Absente"
+arch_present -> coherence: "Présente"
+
+arch_assess -> stop_no_arch: "Non — ambigu ou complexe"
+arch_assess -> proceed_no_arch: "Oui — simple et évident"
+proceed_no_arch -> coherence
+
+coherence -> stop_incoherent: "Incohérent"
+coherence -> identify_solution: "Cohérent"
+
+identify_solution -> branch_explicit
+
+branch_explicit -> checkout_explicit: "Oui — priorité absolue"
+branch_explicit -> branch_pr: "Non"
+
+branch_pr -> checkout_pr: "Oui — reprendre le PR"
+branch_pr -> branch_only: "Non"
+
+branch_only -> note_fresh: "Oui — travail abandonné"
+branch_only -> load_context: "Non — rien trouvé"
+
+checkout_explicit -> load_context
+checkout_pr -> load_context
+note_fresh -> load_context
+
+load_context -> git_sync
+git_sync -> uncommitted
+
+uncommitted -> stop_uncommitted: "Oui"
+uncommitted -> drift_check: "Non"
+
+drift_check -> stop_drift_pre: "Drift détecté — hypothèses invalides"
+drift_check -> create_branch: "OK — hypothèses valides"
+
+create_branch -> implement
+implement -> drift_mid
+
+drift_mid -> revert: "Oui — divergence détectée"
+drift_mid -> qc: "Non — tout correspond"
+revert -> stop_drift_mid
+
+qc -> qc_fixable: "Échec"
+qc -> open_pr: "Tout passe"
+
+qc_fixable -> qc_fix: "Oui"
+qc_fixable -> stop_qc: "Non"
+qc_fix -> qc
+
+open_pr -> notify
+notify -> done

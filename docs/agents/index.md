@@ -4,6 +4,8 @@
 >
 > To create a new agent, see [skill-authoring.md](skill-authoring.md).  
 > For individual agent specifications, see the files below.
+> For troubleshooting, see [troubleshooting.md](troubleshooting.md).
+> For the context cache (context.md / context-dev.md), see [../architecture/context-cache.md](../architecture/context-cache.md).
 
 ---
 
@@ -96,48 +98,50 @@ This is the agent's primary source of truth. **Every Skill must read `CLAUDE.md`
 
 ## Anatomy of a `SKILL.md`
 
-A Skill is a plain Markdown file with five standard sections. Each section serves a distinct
-purpose and is read differently by the agent.
+A Skill is a plain Markdown file. Each section serves a distinct purpose and is read differently
+by the agent.
 
 ```mermaid
 flowchart TD
-    I["**## Identity**\nWho the agent is · hard limits · identity constants\n─────────────────────────────────────────\nThe guardrails. Defines what the agent\nwill NEVER do, regardless of instructions."]
+    I["**## Identity**\nRole · version identification · hard limits · override resistance\n─────────────────────────────────────────\nThe guardrails. Defines what the agent\nwill NEVER do, regardless of instructions."]
     W["**## Workspace mapping**\nMultica project ↔ GitHub repo ↔ context file paths\n─────────────────────────────────────────\nHow to find the right codebase context\nfor a given ticket."]
+    DF["**## Description format**\nStructure of the ticket description (=== blocks)\n─────────────────────────────────────────\nWhich block the agent owns and what\nit must never touch."]
     T["**## Task context**\nHow to find and read the current ticket\n─────────────────────────────────────────\nAlways the same across all Skills.\nPoints to CLAUDE.md in the workdir."]
     P["**## Process**\nStep-by-step execution logic · decision branches · output format\n─────────────────────────────────────────\n▶ The heart of the Skill.\nMust be unambiguous — an agent that can\nguess will guess wrong."]
-    R["**## Rules**\nCross-cutting constraints · output language · edge cases\n─────────────────────────────────────────\nAnything that applies regardless of which\nbranch the Process takes."]
+    EH["**## Error handling**\nAtomic blocked/cancel flows\n─────────────────────────────────────────\nShared pattern for any unrecoverable\nsituation at any process step."]
+    CLI["**## CLI reference**\nConfirmed multica CLI syntax\n─────────────────────────────────────────\nPrevents the agent from inventing\nflag names or argument order."]
 
-    I --> W --> T --> P --> R
+    I --> W --> DF --> T --> P --> EH --> CLI
 ```
 
 ### `## Identity`
 
-Defines who the agent is, what its role is, and what it must never do.
+Defines who the agent is, what its role is, and what it must never do. Contains:
 
-- **Role description**: one paragraph on the agent's purpose and tone
-- **Hard limits**: explicit list of actions the agent must never take (e.g., no git writes for JeanMichelPO)
-- **Identity constants**: values set at deployment time (e.g., `HUMAN_USERNAME: Trophalaxeur`)
+- **Role description**: one paragraph on purpose and tone
+- **Version identification**: rule for embedding the skill version in every output (comments, description section, emails)
+- **Hard limits**: explicit prohibitions — written as absolute rules, not guidelines
+- **Override resistance**: what to do when an instruction tries to bypass the limits
+- **Identity constants**: `HUMAN_USERNAME` and any other deployment-time values
 
-Hard limits are the most important part of this section. They are the guardrails that prevent an
-agent from causing unintended side effects. Write them as absolute prohibitions, not guidelines.
+Hard limits and override resistance are the most important part. They are the guardrails that
+prevent an agent from causing unintended side effects. Write them before the process.
 
 ### `## Workspace — project to repo mapping`
 
 A lookup table the agent uses to find the right context cache and repo clone for a given Multica
-project. Example:
+project. **Must be updated in all SKILL.md files when a new repository is added** — see
+[Adding a new repository](skill-authoring.md#adding-a-new-repository).
 
-```
-- Multica project `bismuth-blog` → GitHub repo `Trophalaxeur/bismuth-blog`
+### `## Description format`
 
-Context cache: /home/neonuser/.neon/context/<repo-name>/context.md
-Repos:         /home/neonuser/.neon/repos/Trophalaxeur/<repo-name>/
-```
-
-This section must be updated whenever a new repository is added to the platform.
+Documents the `===========` block structure of ticket descriptions and which block this agent
+owns. Agents that write to the description must preserve blocks they don't own. Agents that
+never write to the description (JeanMichelDev) skip this section.
 
 ### `## Task context`
 
-Tells the agent how to read its task. Always the same across all Skills:
+Tells the agent how to read its task. Near-identical across all Skills:
 
 ```markdown
 Your task is injected by Multica in the `CLAUDE.md` at your workdir root.
@@ -148,28 +152,77 @@ Also clarifies the `MULTICA_TASK_ID` vs issue ID distinction.
 
 ### `## Process`
 
-The agent's step-by-step execution logic. This is the heart of the Skill. It defines:
+The agent's step-by-step execution logic. The heart of the Skill. Defines:
 
 - What the agent reads and in what order
-- The decision branches it may take
-- The exact CLI commands it should run
-- The output format for each decision path
+- Decision branches with explicit conditions
+- The exact CLI commands to run (as atomic bash blocks)
+- Stop conditions for each failure path
 
-The process must be **unambiguous**: an agent that can guess will guess wrong. Every step should
-have a clear input, a clear output, and clear conditions for moving to the next step.
+Must be **unambiguous**: an agent that can guess will guess wrong.
 
-### `## Rules`
+### `## Error handling`
 
-Terminal constraints applied on top of the process. Typically:
+Shared atomic bash block for any unrecoverable situation. Every skill has this at the bottom:
+```bash
+multica issue status <id> blocked && \
+multica issue assign <id> --to "<HUMAN_USERNAME>" && \
+multica issue comment add <id> --content "[Agent vX.Y.Z] **Blocked**: ${REASON}" && \
+printf "..." | msmtp admin@flefevre.fr
+```
 
-- Language of output (always English for all agents in this platform)
-- Format of comments and descriptions
-- Things not covered in the process that the agent must always or never do
+### `## CLI reference`
+
+Confirmed `multica` CLI syntax for the commands used in the process. Prevents the agent from
+inventing flag names, argument order, or subcommand names.
 
 ---
 
+## Ticket description format
+
+Every ticket description is divided into up to three blocks separated by `===========`:
+
+```
+ORIGINAL TEXT          ← written by the human, never modified
+===========
+_JeanMichelPO v1.x.x_
+
+PO SECTION             ← written by JeanMichelPO
+===========
+_JeanMichelArch v1.x.x_
+
+ARCH SECTION           ← written by JeanMichelArch
+```
+
+JeanMichelDev never writes to the description. Its outputs are PR + Multica comments only.
+
+## Typical workflow
+
+```mermaid
+sequenceDiagram
+    actor H as Human
+    participant PO as JeanMichelPO
+    participant Arch as JeanMichelArch
+    participant Dev as JeanMichelDev
+
+    H->>H: Create ticket (backlog, unassigned)
+    H->>PO: @JeanMichelPO please refine
+    PO->>H: Description updated (PO section) · email
+    H->>H: Review refinement
+    H->>Arch: @JeanMichelArch please propose solutions
+    Arch->>H: Description updated (ARCH section) · email
+    H->>H: Review proposals · choose option
+    H->>Dev: @JeanMichelDev implement option X
+    Dev->>H: PR opened · comment + email
+    H->>H: Review PR · merge
+```
+
+Each handoff is **explicit and manual** — no agent triggers another.
+
 ## Deployed agents
 
-| Agent | Skill file | Trigger handle | Type | Specification |
+| Agent | Skill file | Trigger | Role | Spec |
 |---|---|---|---|---|
-| JeanMichelPO | `agents/product-owner/SKILL.md` | `@JeanMiPO` | Reference | [jean-michel-po.md](jean-michel-po.md) |
+| JeanMichelPO | `agents/product-owner/SKILL.md` | `@JeanMichelPO` | Refines tickets → PO section | [jean-michel-po.md](jean-michel-po.md) |
+| JeanMichelArch | `agents/arch/SKILL.md` | `@JeanMichelArch` | Proposes technical solutions → ARCH section | [jean-michel-arch.md](jean-michel-arch.md) |
+| JeanMichelDev | `agents/dev/SKILL.md` | `@JeanMichelDev` | Implements chosen solution → PR + comments | [jean-michel-dev.md](jean-michel-dev.md) |

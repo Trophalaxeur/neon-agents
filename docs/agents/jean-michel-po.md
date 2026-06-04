@@ -15,6 +15,7 @@
 - [The four outcomes — at a glance](#the-four-outcomes----at-a-glance)
 - [What a ticket looks like before and after](#what-a-ticket-looks-like-before-and-after)
 - [Decision process](#decision-process)
+- [Re-trigger behaviour](#re-trigger-behaviour)
 - [Output formats](#output-formats)
 - [Executability labels](#executability-labels)
 - [Status transitions](#status-transitions)
@@ -44,18 +45,15 @@ It only reads — and writes back to Multica.
 
 ## Trigger
 
-Mention `@JeanMiPO` in a Multica comment. The mention can include inline instructions:
+Mention `@JeanMichelPO` in a Multica comment. The mention can include inline instructions:
 
 ```
-@JeanMiPO please focus on the mobile responsive layout, ignore the desktop version for now
+@JeanMichelPO please focus on the mobile responsive layout, ignore the desktop version for now
 ```
 
-Instructions accumulate across multiple comments. If two instructions contradict each other,
-the **later one wins**.
+Instructions accumulate across multiple comments. If two contradict each other, the **later one wins**.
 
-JeanMichelPO can be triggered multiple times on the same ticket for re-refinement. It detects
-whether a ticket is already refined and has no new instruction — in that case, it asks what to
-improve rather than silently re-running.
+JeanMichelPO can be triggered multiple times on the same ticket. See [Re-trigger behaviour](#re-trigger-behaviour) below.
 
 ---
 
@@ -106,13 +104,14 @@ Labels: bismuth-blog
 Body:   The blog is slow, we should do something about performance.
 ```
 
-**After** — what JeanMichelPO produces:
+**After** — what JeanMichelPO writes to the description:
 
 ```markdown
-> **Original request**
-> The blog is slow, we should do something about performance.
+The blog is slow, we should do something about performance.
 
----
+===========
+
+_JeanMichelPO v1.2.0_
 
 ## Summary
 Reduce perceived loading time of the blog homepage by optimizing image delivery
@@ -137,8 +136,8 @@ Blog homepage loads in under 2s on a 4G connection. No broken layouts.
 Medium — impacts asset pipeline and build config, single repo.
 ```
 
-*The agent cited the Lighthouse baseline from the actual workflow file found in `context.md`.
-It did not invent it.*
+*The original description is preserved verbatim before the first `===========`. The agent cited
+the Lighthouse baseline from the actual workflow file found in `context.md` — it did not invent it.*
 
 ---
 
@@ -223,21 +222,15 @@ If a fact cannot be confirmed, flag it in `## Notes` as `⚠ Unverified`.
 A vague AC like "A storage is selected (see Notes)" is a symptom of a blocking unknown being
 incorrectly parked in Notes. If the AC cannot be concrete without the information, it is UNCLEAR.
 
-### Step 4 — Detect re-refinement without instructions
+### Step 3 — Re-trigger detection
 
-If the description already contains all four sections (`## Summary`, `## Acceptance Criteria`,
-`## Expected Result`, `## Complexity`) AND Step 0 found **no** `@JeanMichelPO` instruction:
+If the description already contains `_JeanMichelPO v` (the version tag written by a previous run)
+AND Step 0 found **no** `@JeanMichelPO` instruction: ask for clarification and stop.
 
-```bash
-multica issue comment add <id> --content \
-  "This ticket appears already refined. What would you like me to improve?"
-```
+If any `@JeanMichelPO` instruction was found, proceed to Step 4 (decision).
+For re-trigger behaviour in detail, see [Re-trigger behaviour](#re-trigger-behaviour).
 
-Leave status and assignee unchanged. Do not re-refine silently.
-
-If any `@JeanMichelPO` instruction was found, skip this check and proceed to Step 5.
-
-### Step 5 — Apply decision logic
+### Step 4 — Apply decision logic
 
 | Decision | Condition |
 |---|---|
@@ -253,16 +246,32 @@ If any `@JeanMichelPO` instruction was found, skip this check and proceed to Ste
 
 ---
 
-## Output formats
+## Re-trigger behaviour
 
-### `REFINE` — refined description template
+JeanMichelPO distinguishes three re-trigger situations:
 
-```markdown
-> **Original request**
->
-> {original description verbatim — preserve line breaks with "> " prefix on each line}
+| Situation | Detection | Behaviour |
+|---|---|---|
+| Accidental re-trigger | `_JeanMichelPO v` in description, no `@JeanMichelPO` instruction | Comments "already refined, what to improve?" — no changes |
+| Clarification request | Instruction is a question ("why", "what did you mean") | Answers in a comment — does **not** amend the description |
+| Amendment request | Instruction asks for a change ("change X", "add Y") | Rewrites PO section — posts before/after diff comment |
+
+The version tag `_JeanMichelPO v1.x.x_` at the top of the PO section is the detection marker for
+all three cases. A `===========` separator without this tag (e.g., from the original description)
+does not trigger the re-trigger path.
 
 ---
+
+## Output formats
+
+### `REFINE` — description structure
+
+```markdown
+{original description verbatim}
+
+===========
+
+_JeanMichelPO v1.x.x_
 
 ## Summary
 [Functional description of the feature/fix and its value. No technical implementation details.]
@@ -324,7 +333,7 @@ Acceptance Criteria:
 Acceptance Criteria:
 - [ ] ...
 
-To proceed: @JeanMiPO "create the tickets as proposed" (or with adjustments).
+To proceed: reply with confirmation (or adjustments), then trigger JeanMichelPO once to create the sub-tickets.
 This ticket will remain blocked until resolved.
 ```
 
@@ -368,10 +377,13 @@ The split is per AC item, never per ticket.
 | TOO_COMPLEX | `backlog` → `blocked` | Reason + recommendation |
 | SPLIT (proposal) | `backlog` → `blocked` | Proposed sub-tickets |
 | SPLIT (resolution) | `blocked` → `cancelled` | Sub-ticket IDs created |
+| Re-trigger, clarification | status unchanged | Answer in comment only |
+| Re-trigger, amendment | any → `todo` | Rewrites PO section + before/after comment |
 | Already refined, no instruction | status unchanged | "This ticket appears already refined…" |
 
-After REFINE, the ticket is also **reassigned** to `Trophalaxeur` (the `HUMAN_USERNAME` constant)
-so the operator can review the result.
+After REFINE, the ticket is **reassigned** to `Trophalaxeur` (`HUMAN_USERNAME`) and an email is
+sent. The human then decides whether to trigger JeanMichelArch (technical proposals) or JeanMichelDev
+(direct implementation for simple tickets). No agent is triggered automatically.
 
 ---
 
@@ -408,6 +420,6 @@ sequenceDiagram
     CC->>Mail: printf "To: admin@...\nSubject: [Multica] NA-42 — Refined\n\n..." | msmtp <your-email>
 ```
 
-Steps 6 and 7 (execute + notify) are grouped into a **single atomic bash call**. If the task is
-interrupted after execution but before the email, the Multica updates are already committed.
+The execute + notify operations (Step 6) are grouped into a **single atomic bash call**. If the
+task is interrupted after execution but before the email, the Multica updates are already committed.
 If interrupted before execution, nothing has changed and a rerun is safe.
