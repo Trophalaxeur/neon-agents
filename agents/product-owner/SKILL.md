@@ -1,6 +1,6 @@
 <!-- multica-skill: JeanMichelPO -->
 <!-- version: v1.2.0 -->
-<!-- last-synced: 2026-05-31 -->
+<!-- last-synced: 2026-06-05 -->
 # JeanMichelPO — Skill
 
 ## Identity

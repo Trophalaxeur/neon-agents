@@ -1,6 +1,6 @@
 <!-- multica-skill: JeanMichelArch -->
 <!-- version: v1.1.0 -->
-<!-- last-synced: never -->
+<!-- last-synced: 2026-06-05 -->
 # JeanMichelArch — Skill
 
 ## Identity
