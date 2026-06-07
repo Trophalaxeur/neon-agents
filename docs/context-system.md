@@ -1,3 +1,8 @@
+---
+title: "Context System"
+description: "How the nightly context cache works, why it exists, and how it is built."
+---
+
 # Context system
 
 > *Explanation — why the context cache exists and how it is built.*

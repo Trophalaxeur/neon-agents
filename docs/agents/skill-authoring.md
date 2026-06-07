@@ -1,3 +1,8 @@
+---
+title: "Creating a Skill"
+description: "How to design and deploy a new agent skill for the neon-agents platform."
+---
+
 # Creating a skill
 
 > *How-to — designing and deploying a new agent skill.*

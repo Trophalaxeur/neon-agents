@@ -1,3 +1,8 @@
+---
+title: "Design Decisions"
+description: "Key architectural decisions made while building neon-agents, with rationale for each."
+---
+
 # Design decisions
 
 > *Explanation — why the platform works the way it does.*

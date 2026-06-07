@@ -1,3 +1,8 @@
+---
+title: "Agents"
+description: "How agents work in the neon-agents platform and how to create new ones."
+---
+
 # Agents
 
 > *Explanation — how agents work in this platform.*

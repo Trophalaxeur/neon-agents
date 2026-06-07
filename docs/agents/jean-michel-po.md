@@ -1,3 +1,8 @@
+---
+title: "JeanMichelPO"
+description: "Full specification of the JeanMichelPO agent — ticket refinement and product ownership."
+---
+
 # JeanMichelPO
 
 > *Reference — full specification of the JeanMichelPO agent.*

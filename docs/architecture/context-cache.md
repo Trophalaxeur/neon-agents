@@ -1,3 +1,8 @@
+---
+title: "Context Cache"
+description: "What the context cache contains, how it is built, and how to maintain it."
+---
+
 # Context cache
 
 > *Reference — what the context cache contains, how it is built, and how to maintain it.*

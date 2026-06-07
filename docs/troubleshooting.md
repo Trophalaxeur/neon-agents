@@ -1,3 +1,8 @@
+---
+title: "Troubleshooting"
+description: "Common problems in neon-agents — symptoms, causes, and fixes."
+---
+
 # Troubleshooting
 
 > *How-to — diagnosing and fixing common problems.*

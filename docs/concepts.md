@@ -1,3 +1,8 @@
+---
+title: "Concepts"
+description: "Core terms and concepts used throughout the neon-agents platform — read this first."
+---
+
 # Concepts
 
 > *Explanation — read this before anything else.*

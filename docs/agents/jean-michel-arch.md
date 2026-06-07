@@ -1,3 +1,8 @@
+---
+title: "JeanMichelArch"
+description: "Full specification of the JeanMichelArch agent — technical proposals and architecture review."
+---
+
 # JeanMichelArch
 
 > *Reference — full specification of the JeanMichelArch agent.*

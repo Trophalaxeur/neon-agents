@@ -1,3 +1,8 @@
+---
+title: "Glossary"
+description: "Alphabetical definitions of all technical terms used in the neon-agents platform."
+---
+
 # Glossary
 
 > *Reference — alphabetical definitions of all technical terms.*
