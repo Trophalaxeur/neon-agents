@@ -1,3 +1,8 @@
+---
+title: "neon-agents"
+description: "Self-hosted platform for AI agents orchestrated by Multica."
+---
+
 # neon-agents
 
 > Self-hosted platform for AI agents, orchestrated by Multica.

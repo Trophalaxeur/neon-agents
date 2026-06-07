@@ -1,3 +1,8 @@
+---
+title: "Architecture"
+description: "Overview of the neon-agents system architecture as it stands today."
+---
+
 # Architecture
 
 > *Explanation — the system as it stands today.*

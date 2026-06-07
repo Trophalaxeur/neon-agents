@@ -1,3 +1,8 @@
+---
+title: "Agent Troubleshooting"
+description: "Known failure modes for neon-agents and how to resolve them."
+---
+
 # Troubleshooting
 
 > *Reference — known failure modes and how to resolve them.*

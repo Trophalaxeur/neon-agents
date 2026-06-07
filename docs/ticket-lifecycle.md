@@ -1,3 +1,8 @@
+---
+title: "Ticket Lifecycle"
+description: "All ticket statuses and transition rules in the Multica workflow."
+---
+
 # Ticket lifecycle
 
 > *Reference — all statuses and transitions.*

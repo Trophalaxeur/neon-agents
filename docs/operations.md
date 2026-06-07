@@ -1,3 +1,8 @@
+---
+title: "Operations"
+description: "Day-to-day commands for operating the neon-agents platform."
+---
+
 # Operations
 
 > *How-to — day-to-day commands for operating neon-agents.*

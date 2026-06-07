@@ -1,3 +1,8 @@
+---
+title: "Vision"
+description: "Intent and future direction for neon-agents — what the system is designed to become."
+---
+
 # Vision
 
 > *Explanation — intent and future direction. This is what the system is designed to become,

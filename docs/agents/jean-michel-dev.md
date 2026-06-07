@@ -1,3 +1,8 @@
+---
+title: "JeanMichelDev"
+description: "Full specification of the JeanMichelDev agent — implementation and code changes."
+---
+
 # JeanMichelDev
 
 > *Reference — full specification of the JeanMichelDev agent.*

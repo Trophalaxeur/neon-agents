@@ -1,3 +1,8 @@
+---
+title: "Multica"
+description: "Why Multica was chosen as the orchestration tool and how it integrates with neon-agents."
+---
+
 # Multica
 
 > *Explanation — why this tool was chosen and how it works.*
