@@ -3,7 +3,7 @@ repos:
     name: neon-agents
     # no dev_include → no context-dev.md (skill/config files, no source tree to explore)
   - owner: Trophalaxeur
-    name: homelab-gallium
+    name: gallium-homelab
     dev_include: "ansible/roles/**,ansible/group_vars/**,terraform/**"
   - owner: Trophalaxeur
     name: bismuth-blog
